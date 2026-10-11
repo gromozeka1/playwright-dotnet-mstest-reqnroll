@@ -336,6 +336,14 @@ node_modules/
 **/*.Server/ModelManifest.xml
 _Pvt_Extensions
 
+# SQLite database files
+ProductAPI/Database/*.db
+ProductAPI/Database/*.db-shm
+ProductAPI/Database/*.db-wal
+
+# Keep the folder in source control
+!ProductAPI/Database/.gitkeep
+
 # Paket dependency manager
 **/.paket/paket.exe
 paket-files/
