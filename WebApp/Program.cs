@@ -1,3 +1,5 @@
+using WebApp.Services;
+
 namespace WebApp;
 
 public class Program
@@ -8,6 +10,16 @@ public class Program
 
         // Add services to the container.
         builder.Services.AddControllersWithViews();
+        var productApiBaseUrl = builder.Configuration["ProductApi:BaseUrl"];
+        if (!Uri.TryCreate(productApiBaseUrl, UriKind.Absolute, out var productApiBaseUri))
+        {
+            throw new InvalidOperationException("ProductApi:BaseUrl must be configured as an absolute URI.");
+        }
+
+        builder.Services.AddHttpClient<ProductApiClient>(client =>
+        {
+            client.BaseAddress = productApiBaseUri;
+        });
 
         var app = builder.Build();
 
@@ -27,7 +39,7 @@ public class Program
         app.MapStaticAssets();
         app.MapControllerRoute(
             name: "default",
-            pattern: "{controller=Home}/{action=Index}/{id?}")
+            pattern: "{controller=Products}/{action=Index}/{id?}")
             .WithStaticAssets();
 
         app.Run();
