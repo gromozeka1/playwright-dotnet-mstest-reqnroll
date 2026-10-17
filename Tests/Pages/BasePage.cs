@@ -1,4 +1,3 @@
-using Framework.Config;
 using Framework.Driver;
 using Microsoft.Playwright;
 
@@ -7,8 +6,6 @@ namespace Tests.Pages;
 public abstract class BasePage(PlaywrightDriver playwrightDriver)
 {
     protected IPage Page { get; } = playwrightDriver.Page.Result;
-
-    public async Task NavigateAsync() => await Page.GotoAsync(ConfigReader.Settings.ApplicationUrl);
 
     protected ILocator Link(string name) => Page.GetByRole(AriaRole.Link, new() { Name = name });
 

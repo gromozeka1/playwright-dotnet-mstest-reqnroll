@@ -5,10 +5,8 @@ using AventStack.ExtentReports.Model;
 using AventStack.ExtentReports.Reporter;
 using Framework.Config;
 using Framework.Driver;
-using Reqnroll;
 using Reqnroll.BoDi;
 using Tests.Models;
-using Tests.Pages;
 using Tests.Support;
 
 namespace Tests.Hooks;
@@ -44,7 +42,10 @@ public class Hooks(
 
     // Resolved here, not injected: page objects create the browser page, which API scenarios must not do.
     [BeforeScenario("ui", Order = 20)]
-    public async Task OpenApplication() => await container.Resolve<ProductListPage>().NavigateAsync();
+    public async Task OpenApplication()
+    {
+        await (await playwrightDriver.Page).GotoAsync(ConfigReader.Settings.ApplicationUrl);
+    }
 
     [AfterStep]
     public async Task ReportStep()
