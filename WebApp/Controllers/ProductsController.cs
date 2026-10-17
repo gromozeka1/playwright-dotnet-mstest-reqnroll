@@ -61,7 +61,7 @@ public class ProductsController : Controller
     {
         try
         {
-            var product = await _productApi.GetByIdAsync(id, cancellationToken);
+            ProductViewModel? product = await _productApi.GetByIdAsync(id, cancellationToken);
             return product is null ? NotFound() : View(product);
         }
         catch (HttpRequestException exception)
@@ -107,7 +107,7 @@ public class ProductsController : Controller
     {
         try
         {
-            var product = await _productApi.GetByIdAsync(id, cancellationToken);
+            ProductViewModel? product = await _productApi.GetByIdAsync(id, cancellationToken);
             return product is null ? NotFound() : View(product);
         }
         catch (HttpRequestException exception)
@@ -121,7 +121,7 @@ public class ProductsController : Controller
     {
         try
         {
-            var product = await _productApi.GetByIdAsync(id, cancellationToken);
+            ProductViewModel? product = await _productApi.GetByIdAsync(id, cancellationToken);
             return product is null ? NotFound() : View(product);
         }
         catch (HttpRequestException exception)

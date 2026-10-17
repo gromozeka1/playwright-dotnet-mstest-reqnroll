@@ -7,40 +7,40 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        var builder = WebApplication.CreateBuilder(args);
+        WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
         var dbDirectory = Path.Combine(builder.Environment.ContentRootPath, "Database");
-        Directory.CreateDirectory(dbDirectory);
+        _ = Directory.CreateDirectory(dbDirectory);
         var dbPath = Path.Combine(dbDirectory, "ProductList.db");
 
         // Add services to the container.
 
-        builder.Services.AddControllers();
+        _ = builder.Services.AddControllers();
         // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-        builder.Services.AddOpenApi();
-        builder.Services.AddDbContext<ProductContext>(opt =>
+        _ = builder.Services.AddOpenApi();
+        _ = builder.Services.AddDbContext<ProductContext>(opt =>
             opt.UseSqlite($"Data Source={dbPath}"));
 
-        var app = builder.Build();
+        WebApplication app = builder.Build();
 
-        using (var scope = app.Services.CreateScope())
+        using (IServiceScope scope = app.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<ProductContext>();
-            dbContext.Database.EnsureCreated();
+            ProductContext dbContext = scope.ServiceProvider.GetRequiredService<ProductContext>();
+            _ = dbContext.Database.EnsureCreated();
         }
 
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
         {
-            app.MapOpenApi();
+            _ = app.MapOpenApi();
         }
 
-        app.UseHttpsRedirection();
+        _ = app.UseHttpsRedirection();
 
-        app.UseAuthorization();
+        _ = app.UseAuthorization();
 
-        app.MapControllers();
+        _ = app.MapControllers();
 
-        app.MapGet("/", () => "Hello world!");
+        _ = app.MapGet("/", () => "Hello world!");
 
         app.Run();
     }

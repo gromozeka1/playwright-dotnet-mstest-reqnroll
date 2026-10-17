@@ -13,7 +13,7 @@ public class ProductContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Product>().HasData(
+        _ = modelBuilder.Entity<Product>().HasData(
             new Product
             {
                 Id = 1,
