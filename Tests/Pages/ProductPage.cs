@@ -4,24 +4,15 @@ using Tests.Models;
 
 namespace Tests.Pages;
 
-public class ProductPage
+public class ProductPage(PlaywrightDriver playwrightDriver) : BasePage(playwrightDriver)
 {
-    private readonly IPage _page;
+    private ILocator TxtName => Page.GetByLabel("Name");
 
-    public ProductPage(PlaywrightDriver playwrightDriver)
-    {
-        _page = playwrightDriver.Page.Result;
-    }
+    private ILocator TxtDescription => Page.GetByLabel("Description");
 
-    private ILocator TxtName => _page.GetByLabel("Name");
+    private ILocator TxtPrice => Page.Locator("#Price");
 
-    private ILocator TxtDescription => _page.GetByLabel("Description");
-
-    private ILocator TxtPrice => _page.Locator("#Price");
-
-    private ILocator SelectProduct => _page.GetByRole(AriaRole.Combobox, new() { Name = "Product type" });
-
-    private ILocator LnkCreate => _page.GetByRole(AriaRole.Button, new() { Name = "Create product" });
+    private ILocator SelectProduct => Page.GetByRole(AriaRole.Combobox, new() { Name = "Product type" });
 
     public async Task CreateProduct(Product product)
     {
@@ -33,5 +24,5 @@ public class ProductPage
         _ = await SelectProduct.SelectOptionAsync(((int)product.ProductType).ToString());
     }
 
-    public async Task ClickCreate() => await LnkCreate.ClickAsync();
+    public async Task ClickCreate() => await ClickButtonAsync("Create product");
 }

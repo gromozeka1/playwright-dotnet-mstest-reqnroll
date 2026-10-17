@@ -1,35 +1,22 @@
-using Framework.Config;
 using Framework.Driver;
 using Microsoft.Playwright;
 
 namespace Tests.Pages;
 
-public class ProductListPage
+public class ProductListPage(PlaywrightDriver playwrightDriver) : BasePage(playwrightDriver)
 {
-    private readonly IPage _page;
-
-    public ProductListPage(PlaywrightDriver playwrightDriver) => _page = playwrightDriver.Page.Result;
-
-    public async Task NavigateAsync() => await _page.GotoAsync(ConfigReader.Settings.ApplicationUrl);
-
-    private ILocator _lnkProductList => _page.GetByRole(AriaRole.Navigation)
+    private ILocator LnkProductList => Page.GetByRole(AriaRole.Navigation)
         .GetByRole(AriaRole.List)
         .GetByRole(AriaRole.Link, new() { Name = "Products" });
-    private ILocator _lnkCreate => _page.GetByRole(AriaRole.Link, new() { Name = "Add product" });
+
     public async Task CreateProductAsync()
     {
-        await _lnkProductList.ClickAsync();
-        await _lnkCreate.ClickAsync();
+        await LnkProductList.ClickAsync();
+        await ClickLinkAsync("Add product");
     }
 
     public async Task ClickProductFromList(string name)
-    {
-        await _page.GetByRole(AriaRole.Row, new() { Name = name })
-            .GetByRole(AriaRole.Link, new() { Name = "Details" }).ClickAsync();
-    }
+        => await Row(name).GetByRole(AriaRole.Link, new() { Name = "Details" }).ClickAsync();
 
-    public ILocator IsProductCreated(string product)
-    {
-        return _page.GetByText(product, new() { Exact = true });
-    }
+    public ILocator IsProductCreated(string product) => Text(product);
 }
