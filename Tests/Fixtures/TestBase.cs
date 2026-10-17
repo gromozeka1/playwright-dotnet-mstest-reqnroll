@@ -1,3 +1,4 @@
+using Framework.Config;
 using Framework.Driver;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -11,6 +12,8 @@ public abstract class TestBase
     // One scope per test keeps a single driver per test and isolates parallel tests.
     protected IServiceProvider Services => _scope.ServiceProvider;
 
+    protected IPlaywrightDriver Driver => GetService<IPlaywrightDriver>();
+
     [TestInitialize]
     public void CreateScope() => _scope = _rootProvider.CreateAsyncScope();
 
@@ -18,6 +21,10 @@ public abstract class TestBase
     public async Task DisposeScopeAsync() => await _scope.DisposeAsync();
 
     protected T GetService<T>() where T : notnull => Services.GetRequiredService<T>();
+
+    protected async Task NavigateToUrl() => await (await Driver.Page).GotoAsync(ConfigReader.Settings.ApplicationUrl);
+
+    protected async Task TakeScreenshotAsync(string fileName) => await (await Driver.Page).ScreenshotAsync(new() { Path = fileName, FullPage = true });
 
     private static ServiceProvider BuildServiceProvider() => new ServiceCollection()
         .AddScoped<IPlaywrightDriver, PlaywrightDriver>()

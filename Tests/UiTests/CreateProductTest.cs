@@ -10,7 +10,6 @@ namespace Tests.UiTests;
 [TestClass]
 public class CreateProductTest : TestBase
 {
-    private TestFixtureBase _testFixtureBase = null!;
     private IProductListPage _productListPage = null!;
     private IProductPage _productPage = null!;
     private string? _createdProductName;
@@ -24,11 +23,9 @@ public class CreateProductTest : TestBase
     public async Task InitializeAsync()
     {
         // Pages read the driver's page eagerly, so create it before resolving them.
-        IPlaywrightDriver driver = GetService<IPlaywrightDriver>();
-        _ = await driver.Page;
-        _testFixtureBase = new TestFixtureBase(driver);
-        _productListPage = new ProductListPage(driver);
-        _productPage = new ProductPage(driver);
+        _ = await Driver.Page;
+        _productListPage = new ProductListPage(Driver);
+        _productPage = new ProductPage(Driver);
     }
 
     // Runs before the base cleanup, so the driver is still alive; the base scope disposal always follows.
@@ -40,7 +37,7 @@ public class CreateProductTest : TestBase
             return;
         }
 
-        IAPIRequestContext api = await GetService<IPlaywrightDriver>().ApiRequestContext;
+        IAPIRequestContext api = await Driver.ApiRequestContext;
         IAPIResponse listResponse = await api.GetAsync("products");
         JsonElement? data = await listResponse.JsonAsync();
         IEnumerable<Product> products = data?.Deserialize<List<Product>>(_jsonSerializerOptions) ?? [];
@@ -63,7 +60,7 @@ public class CreateProductTest : TestBase
         };
         _createdProductName = product.Name;
 
-        await _testFixtureBase.NavigateToUrl();
+        await NavigateToUrl();
         await _productListPage.CreateProductAsync();
         await _productPage.CreateProduct(product);
         await _productPage.ClickCreate();

@@ -1,6 +1,5 @@
 using System.Text.Json;
 using AwesomeAssertions;
-using Framework.Driver;
 using Microsoft.Playwright;
 using Tests.Fixtures;
 using Tests.Models;
@@ -10,20 +9,15 @@ namespace Tests.ApiTests;
 [TestClass]
 public class ProductsApiTests : TestBase
 {
-    private IPlaywrightDriver _playwrightDriver = null!;
-
     private readonly JsonSerializerOptions _jsonSerializerOptions = new()
     {
         PropertyNameCaseInsensitive = true
     };
 
-    [TestInitialize]
-    public void Initialize() => _playwrightDriver = GetService<IPlaywrightDriver>();
-
     [TestMethod]
     public async Task GetProductsAsync()
     {
-        IAPIResponse productResponse = await (await _playwrightDriver.ApiRequestContext).GetAsync("products/1");
+        IAPIResponse productResponse = await (await Driver.ApiRequestContext).GetAsync("products/1");
         _ = productResponse.Status.Should().Be(200);
 
         JsonElement? data = await productResponse.JsonAsync();
@@ -38,7 +32,7 @@ public class ProductsApiTests : TestBase
     [TestMethod]
     public async Task DeleteProductAsync()
     {
-        IAPIRequestContext apiRequestContext = await _playwrightDriver.ApiRequestContext;
+        IAPIRequestContext apiRequestContext = await Driver.ApiRequestContext;
         Product? product = null;
 
         try
