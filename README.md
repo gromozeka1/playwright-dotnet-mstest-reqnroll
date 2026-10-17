@@ -19,8 +19,11 @@ Install the .NET 10 SDK, then run these commands from the repository root:
 
 ```sh
 dotnet build TestAutomation.slnx
+pwsh Tests/bin/Debug/net10.0/playwright.ps1 install
 dotnet test Tests/Tests.csproj
 ```
+
+The `playwright.ps1` install step downloads the Playwright browsers and requires [PowerShell](https://learn.microsoft.com/powershell/scripting/install/installing-powershell) (`pwsh`). Run it after the first build and again whenever the Playwright package is updated; otherwise UI tests fail with "Looks like Playwright was just installed or updated. Please run the following command to download new browsers". To install only Chromium (the default browser), append `chromium`.
 
 The test endpoints are configured in `Tests/appsettings.json`: `ApplicationUrl` is the WebApp URL and `ApplicationApiUrl` is the ProductAPI base URL used by API tests. Start the SUT before running tests. The defaults are `http://localhost:5168` for WebApp and `http://localhost:5044` for ProductAPI.
 
