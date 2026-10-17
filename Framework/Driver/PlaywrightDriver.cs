@@ -5,7 +5,7 @@ using Framework.Helpers;
 
 namespace Framework.Driver;
 
-public class PlaywrightDriver : IPlaywrightDriver, IDisposable
+public class PlaywrightDriver : IDisposable
 {
     private readonly AsyncLazy<IBrowser> _browser;
     private readonly AsyncLazy<IBrowserContext> _browserContext;
