@@ -5,13 +5,13 @@ Demo repository for a .NET browser and API test automation framework using Playw
 ## Repository structure
 
 - `Framework/` contains shared Playwright support, including browser and API request contexts, driver lifecycle, and test settings.
-- `Tests/` contains MSTest tests, page objects, fixtures, and test configuration. The current product tests exercise the ProductAPI with Playwright's API request context.
+- `Tests/` contains Reqnroll feature files (`Features/`), step definitions (`Steps/`), hooks including Extent reporting (`Hooks/`), page objects, an API helper, and test configuration. UI scenarios are tagged `@ui`; API scenarios exercise ProductAPI through Playwright's API request context. Extent writes `TestReports.html` to the test output folder.
 - `WebApp/` is the MVC user interface for viewing and managing products. It calls ProductAPI through `ProductApiClient`.
 - `ProductAPI/` provides the product HTTP API and EF Core/SQLite persistence.
 - `docker-compose.yml` and the service Dockerfiles define the local containerized SUT.
 - `TestAutomation.slnx` groups the solution projects.
 
-The solution targets .NET 10. The repository name mentions Reqnroll, but the current test project uses MSTest and does not contain Reqnroll feature files.
+The solution targets .NET 10. Tests use Reqnroll with MSTest as the runner.
 
 ## Build and run tests
 
