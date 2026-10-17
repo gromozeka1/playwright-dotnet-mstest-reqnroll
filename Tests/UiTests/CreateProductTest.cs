@@ -60,7 +60,7 @@ public class CreateProductTest : TestBase
         };
         _createdProductName = product.Name;
 
-        await NavigateToUrl();
+        await _productListPage.NavigateAsync();
         await _productListPage.CreateProductAsync();
         await _productPage.CreateProduct(product);
         await _productPage.ClickCreate();
