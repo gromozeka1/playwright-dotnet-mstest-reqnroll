@@ -25,7 +25,7 @@ public class ProductsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<Product>> GetProduct(int id)
     {
-        var product = await _context.Product.FindAsync(id);
+        Product? product = await _context.Product.FindAsync(id);
 
         if (product == null)
         {
@@ -49,7 +49,7 @@ public class ProductsController : ControllerBase
 
         try
         {
-            await _context.SaveChangesAsync();
+            _ = await _context.SaveChangesAsync();
         }
         catch (DbUpdateConcurrencyException)
         {
@@ -76,8 +76,8 @@ public class ProductsController : ControllerBase
             return Problem("Entity already exists");
         }
 
-        _context.Product.Add(product);
-        await _context.SaveChangesAsync();
+        _ = _context.Product.Add(product);
+        _ = await _context.SaveChangesAsync();
 
         return CreatedAtAction("GetProduct", new { id = product.Id }, product);
     }
@@ -86,14 +86,14 @@ public class ProductsController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteProduct(int? id)
     {
-        var product = await _context.Product.FindAsync(id);
+        Product? product = await _context.Product.FindAsync(id);
         if (product == null)
         {
             return NotFound();
         }
 
-        _context.Product.Remove(product);
-        await _context.SaveChangesAsync();
+        _ = _context.Product.Remove(product);
+        _ = await _context.SaveChangesAsync();
 
         return NoContent();
     }
