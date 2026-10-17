@@ -5,7 +5,7 @@ using Tests.Models;
 
 namespace Tests.Support;
 
-public class ProductsApi(IPlaywrightDriver playwrightDriver)
+public class ProductsApi(PlaywrightDriver playwrightDriver)
 {
     private static readonly JsonSerializerOptions _jsonSerializerOptions = new()
     {

@@ -6,7 +6,7 @@ using Tests.Pages;
 namespace Tests.Steps;
 
 [Binding]
-public sealed class ProductSteps(ScenarioContext scenarioContext, IProductPage productPage, IProductListPage productListPage)
+public sealed class ProductSteps(ScenarioContext scenarioContext, ProductPage productPage, ProductListPage productListPage)
 {
     [Given("I click the Product menu")]
     public async Task GivenIClickTheProductMenu() => await productListPage.CreateProductAsync();

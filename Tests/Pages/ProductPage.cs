@@ -4,17 +4,11 @@ using Tests.Models;
 
 namespace Tests.Pages;
 
-public interface IProductPage
-{
-    Task CreateProduct(Product product);
-    Task ClickCreate();
-}
-
-public class ProductPage : IProductPage
+public class ProductPage
 {
     private readonly IPage _page;
 
-    public ProductPage(IPlaywrightDriver playwrightDriver)
+    public ProductPage(PlaywrightDriver playwrightDriver)
     {
         _page = playwrightDriver.Page.Result;
     }

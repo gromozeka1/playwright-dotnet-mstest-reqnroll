@@ -14,8 +14,8 @@ namespace Tests.Hooks;
 
 [Binding]
 public class Hooks(
-    IPlaywrightDriver playwrightDriver,
-    IProductListPage productListPage,
+    PlaywrightDriver playwrightDriver,
+    ProductListPage productListPage,
     ProductsApi productsApi,
     FeatureContext featureContext,
     ScenarioContext scenarioContext)
