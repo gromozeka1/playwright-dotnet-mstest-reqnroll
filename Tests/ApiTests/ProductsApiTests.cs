@@ -64,6 +64,10 @@ public class ProductsApiTests
     {
         IAPIResponse response = await apiRequestContext.PostAsync("products", new APIRequestContextOptions
         {
+            Headers = new Dictionary<string, string>
+            {
+                ["Content-Type"] = "application/json"
+            },
             Data = JsonSerializer.Serialize(new
             {
                 Name = $"Test product {Guid.NewGuid():N}",
