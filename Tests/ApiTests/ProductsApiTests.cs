@@ -2,22 +2,23 @@ using System.Text.Json;
 using AwesomeAssertions;
 using Framework.Driver;
 using Microsoft.Playwright;
+using Tests.Fixtures;
 using Tests.Models;
 
 namespace Tests.ApiTests;
 
 [TestClass]
-public class ProductsApiTests
+public class ProductsApiTests : TestBase
 {
-    private readonly PlaywrightDriver _playwrightDriver = new();
+    private IPlaywrightDriver _playwrightDriver = null!;
 
     private readonly JsonSerializerOptions _jsonSerializerOptions = new()
     {
         PropertyNameCaseInsensitive = true
     };
 
-    [TestCleanup]
-    public void Cleanup() => _playwrightDriver.Dispose();
+    [TestInitialize]
+    public void Initialize() => _playwrightDriver = GetService<IPlaywrightDriver>();
 
     [TestMethod]
     public async Task GetProductsAsync()
