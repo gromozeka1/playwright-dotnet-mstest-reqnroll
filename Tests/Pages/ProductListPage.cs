@@ -4,19 +4,11 @@ using Microsoft.Playwright;
 
 namespace Tests.Pages;
 
-public interface IProductListPage
-{
-    Task NavigateAsync();
-    Task CreateProductAsync();
-    Task ClickProductFromList(string name);
-    ILocator IsProductCreated(string product);
-}
-
-public class ProductListPage : IProductListPage
+public class ProductListPage
 {
     private readonly IPage _page;
 
-    public ProductListPage(IPlaywrightDriver playwrightDriver) => _page = playwrightDriver.Page.Result;
+    public ProductListPage(PlaywrightDriver playwrightDriver) => _page = playwrightDriver.Page.Result;
 
     public async Task NavigateAsync() => await _page.GotoAsync(ConfigReader.Settings.ApplicationUrl);
 
