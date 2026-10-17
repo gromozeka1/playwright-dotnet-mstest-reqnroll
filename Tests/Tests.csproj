@@ -8,13 +8,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AwesomeAssertions" Version="9.6.0" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
-    <PackageReference Include="MSTest" Version="4.5.1" />
+    <PackageReference Include="AwesomeAssertions" />
+    <PackageReference Include="ExtentReports" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="MSTest" />
+    <PackageReference Include="Reqnroll.MSTest" />
+    <PackageReference Include="Reqnroll.Tools.MsBuild.Generation" />
   </ItemGroup>
 
   <ItemGroup>
+    <Using Include="Reqnroll" />
     <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />
   </ItemGroup>
 
@@ -25,5 +28,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Framework\Framework.csproj" />
   </ItemGroup>
+
 
 </Project>
