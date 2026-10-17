@@ -25,9 +25,9 @@ public class ProductPage : IProductPage
 
     private ILocator TxtPrice => _page.Locator("#Price");
 
-    private ILocator SelectProduct => _page.GetByRole(AriaRole.Combobox, new() { Name = "ProductType" });
+    private ILocator SelectProduct => _page.GetByRole(AriaRole.Combobox, new() { Name = "Product type" });
 
-    private ILocator LnkCreate => _page.GetByRole(AriaRole.Button, new() { Name = "Create" });
+    private ILocator LnkCreate => _page.GetByRole(AriaRole.Button, new() { Name = "Create product" });
 
     public async Task CreateProduct(Product product)
     {
@@ -36,7 +36,7 @@ public class ProductPage : IProductPage
         await TxtName.FillAsync(product.Name);
         await TxtDescription.FillAsync(product.Description);
         await TxtPrice.FillAsync(product.Price.ToString());
-        _ = await SelectProduct.SelectOptionAsync(product.ProductType.ToString());
+        _ = await SelectProduct.SelectOptionAsync(((int)product.ProductType).ToString());
     }
 
     public async Task ClickCreate() => await LnkCreate.ClickAsync();

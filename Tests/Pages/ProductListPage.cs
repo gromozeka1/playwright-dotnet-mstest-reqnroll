@@ -16,8 +16,10 @@ public class ProductListPage : IProductListPage
 
     public ProductListPage(IPlaywrightDriver playwrightDriver) => _page = playwrightDriver.Page.Result;
 
-    private ILocator _lnkProductList => _page.GetByRole(AriaRole.Link, new() { Name = "Product" });
-    private ILocator _lnkCreate => _page.GetByRole(AriaRole.Link, new() { Name = "Create" });
+    private ILocator _lnkProductList => _page.GetByRole(AriaRole.Navigation)
+        .GetByRole(AriaRole.List)
+        .GetByRole(AriaRole.Link, new() { Name = "Products" });
+    private ILocator _lnkCreate => _page.GetByRole(AriaRole.Link, new() { Name = "Add product" });
     public async Task CreateProductAsync()
     {
         await _lnkProductList.ClickAsync();
