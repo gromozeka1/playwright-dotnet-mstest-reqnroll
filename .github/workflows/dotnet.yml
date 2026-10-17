@@ -1,0 +1,55 @@
+name: .NET
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+env:
+  CONFIGURATION: Release
+  OUTPUT_DIR: artifacts/tests
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        global-json-file: global.json
+    - name: Restore dependencies
+      run: dotnet restore TestAutomation.slnx
+    - name: Build
+      run: dotnet build Tests/Tests.csproj --no-restore -c "$CONFIGURATION" -o "$OUTPUT_DIR"
+    - name: Install Playwright browsers
+      run: pwsh "$OUTPUT_DIR/playwright.ps1" install --with-deps chromium
+    - name: Start application
+      run: docker compose up -d --build --wait --wait-timeout 180
+    - name: Wait for application
+      run: |
+        curl --fail --silent --retry 30 --retry-delay 2 --retry-all-errors http://localhost:5168/ > /dev/null
+        curl --fail --silent --retry 30 --retry-delay 2 --retry-all-errors http://localhost:5044/api/products > /dev/null
+    - name: Test
+      env:
+        TEST_Headless: "true"
+      run: dotnet test "$OUTPUT_DIR/Tests.dll" --verbosity normal
+    - name: Upload test artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results
+        path: |
+          ${{ env.OUTPUT_DIR }}/TestReports.html
+          ${{ env.OUTPUT_DIR }}/*.png
+        if-no-files-found: ignore
+    - name: Stop application
+      if: always()
+      run: docker compose down
