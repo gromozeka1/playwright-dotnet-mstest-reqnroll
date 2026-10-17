@@ -24,10 +24,11 @@ public class CreateProductTest : TestBase
     public async Task InitializeAsync()
     {
         // Pages read the driver's page eagerly, so create it before resolving them.
-        _ = await GetService<IPlaywrightDriver>().Page;
-        _testFixtureBase = GetService<TestFixtureBase>();
-        _productListPage = GetService<IProductListPage>();
-        _productPage = GetService<IProductPage>();
+        IPlaywrightDriver driver = GetService<IPlaywrightDriver>();
+        _ = await driver.Page;
+        _testFixtureBase = new TestFixtureBase(driver);
+        _productListPage = new ProductListPage(driver);
+        _productPage = new ProductPage(driver);
     }
 
     // Runs before the base cleanup, so the driver is still alive; the base scope disposal always follows.

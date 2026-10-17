@@ -1,6 +1,5 @@
 using Framework.Driver;
 using Microsoft.Extensions.DependencyInjection;
-using Tests.Pages;
 
 namespace Tests.Fixtures;
 
@@ -22,8 +21,5 @@ public abstract class TestBase
 
     private static ServiceProvider BuildServiceProvider() => new ServiceCollection()
         .AddScoped<IPlaywrightDriver, PlaywrightDriver>()
-        .AddScoped<TestFixtureBase>()
-        .AddScoped<IProductListPage, ProductListPage>()
-        .AddScoped<IProductPage, ProductPage>()
         .BuildServiceProvider(validateScopes: true);
 }
