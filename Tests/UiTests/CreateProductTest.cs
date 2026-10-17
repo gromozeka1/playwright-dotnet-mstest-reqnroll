@@ -1,4 +1,5 @@
 using System.Text.Json;
+using AwesomeAssertions;
 using Framework.Driver;
 using Microsoft.Playwright;
 using Tests.Fixtures;
@@ -39,12 +40,14 @@ public class CreateProductTest : TestBase
 
         IAPIRequestContext api = await Driver.ApiRequestContext;
         IAPIResponse listResponse = await api.GetAsync("products");
+        _ = listResponse.Status.Should().Be(200);
         JsonElement? data = await listResponse.JsonAsync();
         IEnumerable<Product> products = data?.Deserialize<List<Product>>(_jsonSerializerOptions) ?? [];
 
         foreach (Product match in products.Where(p => p.Name == _createdProductName))
         {
-            _ = await api.DeleteAsync($"products/{match.Id}");
+            IAPIResponse deleteResponse = await api.DeleteAsync($"products/{match.Id}");
+            _ = deleteResponse.Status.Should().BeOneOf(204, 404);
         }
     }
 
