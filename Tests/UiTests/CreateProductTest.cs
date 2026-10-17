@@ -1,3 +1,5 @@
+using System.Text.Json;
+using AwesomeAssertions;
 using Framework.Driver;
 using Microsoft.Playwright;
 using Tests.Fixtures;
@@ -7,24 +9,47 @@ using Tests.Pages;
 namespace Tests.UiTests;
 
 [TestClass]
-public class CreateProductTest
+public class CreateProductTest : TestBase
 {
-    private readonly PlaywrightDriver _playwrightDriver = new();
-    private TestFixtureBase _testFixtureBase = null!;
-    private ProductListPage _productListPage = null!;
-    private ProductPage _productPage = null!;
+    private IProductListPage _productListPage = null!;
+    private IProductPage _productPage = null!;
+    private string? _createdProductName;
+
+    private readonly JsonSerializerOptions _jsonSerializerOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
 
     [TestInitialize]
     public async Task InitializeAsync()
     {
-        _ = await _playwrightDriver.Page;
-        _testFixtureBase = new TestFixtureBase(_playwrightDriver);
-        _productListPage = new ProductListPage(_playwrightDriver);
-        _productPage = new ProductPage(_playwrightDriver);
+        // Pages read the driver's page eagerly, so create it before resolving them.
+        _ = await Driver.Page;
+        _productListPage = new ProductListPage(Driver);
+        _productPage = new ProductPage(Driver);
     }
 
+    // Runs before the base cleanup, so the driver is still alive; the base scope disposal always follows.
     [TestCleanup]
-    public void Cleanup() => _playwrightDriver.Dispose();
+    public async Task DeleteCreatedProductAsync()
+    {
+        if (_createdProductName is null)
+        {
+            return;
+        }
+
+        IAPIRequestContext api = await Driver.ApiRequestContext;
+        IAPIResponse listResponse = await api.GetAsync("products");
+        _ = listResponse.Status.Should().Be(200);
+        JsonElement? data = await listResponse.JsonAsync();
+        IEnumerable<Product> products = data?.Deserialize<List<Product>>(_jsonSerializerOptions) ?? [];
+
+        foreach (Product match in products.Where(p => p.Name == _createdProductName))
+        {
+            IAPIResponse deleteResponse = await api.DeleteAsync($"products/{match.Id}");
+            _ = deleteResponse.Status.Should().BeOneOf(204, 404);
+        }
+    }
 
     [TestMethod]
     public async Task CreateProduct()
@@ -36,8 +61,9 @@ public class CreateProductTest
             Price = 100,
             ProductType = ProductType.CPU
         };
+        _createdProductName = product.Name;
 
-        await _testFixtureBase.NavigateToUrl();
+        await _productListPage.NavigateAsync();
         await _productListPage.CreateProductAsync();
         await _productPage.CreateProduct(product);
         await _productPage.ClickCreate();

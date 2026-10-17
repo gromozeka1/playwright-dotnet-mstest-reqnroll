@@ -1,3 +1,4 @@
+using Framework.Config;
 using Framework.Driver;
 using Microsoft.Playwright;
 
@@ -5,6 +6,7 @@ namespace Tests.Pages;
 
 public interface IProductListPage
 {
+    Task NavigateAsync();
     Task CreateProductAsync();
     Task ClickProductFromList(string name);
     ILocator IsProductCreated(string product);
@@ -15,6 +17,8 @@ public class ProductListPage : IProductListPage
     private readonly IPage _page;
 
     public ProductListPage(IPlaywrightDriver playwrightDriver) => _page = playwrightDriver.Page.Result;
+
+    public async Task NavigateAsync() => await _page.GotoAsync(ConfigReader.Settings.ApplicationUrl);
 
     private ILocator _lnkProductList => _page.GetByRole(AriaRole.Navigation)
         .GetByRole(AriaRole.List)
