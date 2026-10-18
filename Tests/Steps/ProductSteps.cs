@@ -14,7 +14,7 @@ public sealed class ProductSteps(ScenarioContext scenarioContext, ProductPage pr
     [Given("I create product with following details")]
     public async Task GivenICreateProductWithFollowingDetails(DataTable table)
     {
-        var product = table.CreateInstance<Product>();
+        Product product = table.CreateInstance<Product>();
 
         scenarioContext.Set(product);
         await productPage.CreateProduct(product);
@@ -23,9 +23,15 @@ public sealed class ProductSteps(ScenarioContext scenarioContext, ProductPage pr
 
     [When("I click the Details link of the newly created product")]
     public async Task WhenIClickTheDetailsLinkOfTheNewlyCreatedProduct()
-        => await productListPage.ClickProductFromList(scenarioContext.Get<Product>().Name);
+    {
+        Product product = scenarioContext.Get<Product>();
+        await productListPage.ClickProductFromList(product.Name);
+    }
 
     [Then("I see all the product details are created as expected")]
     public async Task ThenISeeAllTheProductDetailsAreCreatedAsExpected()
-        => await Assertions.Expect(productListPage.IsProductCreated(scenarioContext.Get<Product>().Name)).ToBeVisibleAsync();
+    {
+        Product product = scenarioContext.Get<Product>();
+        await Assertions.Expect(productListPage.IsProductCreated(product.Name)).ToBeVisibleAsync();
+    }
 }

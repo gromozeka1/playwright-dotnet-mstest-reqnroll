@@ -7,14 +7,14 @@ namespace Framework.Config;
 
 public static class ConfigReader
 {
-    private const string EnvironmentPrefix = "TEST_";
+    private const string _environmentPrefix = "TEST_";
 
     public static TestSettings Settings { get; set; } = ReadConfig();
 
     private static TestSettings ReadConfig()
     {
         var configFilePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? throw new InvalidOperationException("Unable to determine the executing assembly's directory."), "appsettings.json");
-        var config = JsonNode.Parse(File.ReadAllText(configFilePath))?.AsObject()
+        JsonObject config = JsonNode.Parse(File.ReadAllText(configFilePath))?.AsObject()
             ?? throw new ArgumentException("Configuration file is invalid or missing.");
 
         ApplyEnvironmentOverrides(config);
@@ -25,9 +25,9 @@ public static class ConfigReader
     // Environment variables named TEST_<Setting> (e.g. TEST_Headless=true) take precedence over appsettings.json.
     private static void ApplyEnvironmentOverrides(JsonObject config)
     {
-        foreach (var property in typeof(TestSettings).GetProperties())
+        foreach (PropertyInfo property in typeof(TestSettings).GetProperties())
         {
-            var value = Environment.GetEnvironmentVariable($"{EnvironmentPrefix}{property.Name}");
+            var value = Environment.GetEnvironmentVariable($"{_environmentPrefix}{property.Name}");
             if (string.IsNullOrWhiteSpace(value))
             {
                 continue;

@@ -14,13 +14,13 @@ public sealed class ProductApiSteps(ScenarioContext scenarioContext, ProductsApi
     [Given("a product exists with the following details")]
     public async Task GivenAProductExists(DataTable table)
     {
-        var product = table.CreateInstance<Product>();
+        Product product = table.CreateInstance<Product>();
         await productsApi.DeleteByNameAsync(product.Name);
 
         IAPIResponse response = await productsApi.CreateAsync(product);
         _ = response.Status.Should().Be(201);
 
-        scenarioContext.Set(await productsApi.ReadAsync(response));
+        scenarioContext.Set(await ProductsApi.ReadAsync(response));
     }
 
     [When("I request the product with id {int}")]
@@ -38,7 +38,7 @@ public sealed class ProductApiSteps(ScenarioContext scenarioContext, ProductsApi
     [Then("the product has name {string} and price {int}")]
     public async Task ThenTheProductHasNameAndPrice(string name, int price)
     {
-        Product product = await productsApi.ReadAsync(_response);
+        Product product = await ProductsApi.ReadAsync(_response);
 
         _ = product.Name.Should().Be(name);
         _ = product.Price.Should().Be(price);

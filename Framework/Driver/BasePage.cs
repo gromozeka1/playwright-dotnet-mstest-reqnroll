@@ -1,11 +1,10 @@
-using Framework.Driver;
 using Microsoft.Playwright;
 
-namespace Tests.Pages;
+namespace Framework.Driver;
 
 public abstract class BasePage(PlaywrightDriver playwrightDriver)
 {
-    protected IPage Page { get; } = playwrightDriver.Page.Result;
+    protected IPage Page { get; } = playwrightDriver.Page;
 
     protected ILocator Link(string name) => Page.GetByRole(AriaRole.Link, new() { Name = name });
 

@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Json;
 using System.Text.Json;
 using WebApp.Models;
 
@@ -7,7 +6,7 @@ namespace WebApp.Services;
 
 public class ProductApiClient
 {
-    private const string ProductsEndpoint = "api/products";
+    private const string _productsEndpoint = "api/products";
     private readonly HttpClient _httpClient;
 
     public ProductApiClient(HttpClient httpClient)
@@ -17,7 +16,7 @@ public class ProductApiClient
 
     public async Task<IReadOnlyList<ProductViewModel>> GetAllAsync(CancellationToken cancellationToken = default)
     {
-        using HttpResponseMessage response = await _httpClient.GetAsync(ProductsEndpoint, cancellationToken);
+        using HttpResponseMessage response = await _httpClient.GetAsync(_productsEndpoint, cancellationToken);
         _ = response.EnsureSuccessStatusCode();
 
         return await response.Content.ReadFromJsonAsync<List<ProductViewModel>>(cancellationToken: cancellationToken)
@@ -26,7 +25,7 @@ public class ProductApiClient
 
     public async Task<ProductViewModel?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
-        using HttpResponseMessage response = await _httpClient.GetAsync($"{ProductsEndpoint}/{id}", cancellationToken);
+        using HttpResponseMessage response = await _httpClient.GetAsync($"{_productsEndpoint}/{id}", cancellationToken);
         if (response.StatusCode == HttpStatusCode.NotFound)
         {
             return null;
@@ -39,14 +38,14 @@ public class ProductApiClient
 
     public async Task CreateAsync(ProductViewModel product, CancellationToken cancellationToken = default)
     {
-        using HttpResponseMessage response = await _httpClient.PostAsJsonAsync(ProductsEndpoint, product, cancellationToken);
+        using HttpResponseMessage response = await _httpClient.PostAsJsonAsync(_productsEndpoint, product, cancellationToken);
         _ = response.EnsureSuccessStatusCode();
     }
 
     public async Task<bool> UpdateAsync(ProductViewModel product, CancellationToken cancellationToken = default)
     {
         using HttpResponseMessage response = await _httpClient.PutAsJsonAsync(
-            $"{ProductsEndpoint}/{product.Id}",
+            $"{_productsEndpoint}/{product.Id}",
             product,
             cancellationToken);
         if (response.StatusCode == HttpStatusCode.NotFound)
@@ -60,7 +59,7 @@ public class ProductApiClient
 
     public async Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default)
     {
-        using HttpResponseMessage response = await _httpClient.DeleteAsync($"{ProductsEndpoint}/{id}", cancellationToken);
+        using HttpResponseMessage response = await _httpClient.DeleteAsync($"{_productsEndpoint}/{id}", cancellationToken);
         if (response.StatusCode == HttpStatusCode.NotFound)
         {
             return false;

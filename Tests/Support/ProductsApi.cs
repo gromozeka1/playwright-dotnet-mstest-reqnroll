@@ -30,7 +30,7 @@ public class ProductsApi(PlaywrightDriver playwrightDriver)
         })
     });
 
-    public async Task<Product> ReadAsync(IAPIResponse response)
+    public static async Task<Product> ReadAsync(IAPIResponse response)
     {
         JsonElement? data = await response.JsonAsync();
 

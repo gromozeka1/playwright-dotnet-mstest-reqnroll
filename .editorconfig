@@ -269,3 +269,5 @@ dotnet_naming_style.begins_with_underscore.capitalization = camel_case
 
 # IDE0290: Use primary constructor
 dotnet_diagnostic.IDE0290.severity = none
+# IDE0305: Simplify collection initialization
+dotnet_diagnostic.IDE0305.severity = none

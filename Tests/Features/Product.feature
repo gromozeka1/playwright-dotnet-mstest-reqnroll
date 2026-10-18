@@ -1,4 +1,4 @@
-@ui
+@ui @local
 Feature: Product
 
 Create a new product
