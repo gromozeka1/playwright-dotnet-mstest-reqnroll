@@ -95,6 +95,9 @@ Follow `.editorconfig` across all files:
 - Mark step classes `sealed` and annotate with `[Binding]`.
 - Inject dependencies (`ScenarioContext`, page objects, helpers) via C# 12 primary constructors.
 - Pass state between steps using `ScenarioContext.Set<T>(value)` and `ScenarioContext.Get<T>()` / `ScenarioContext.TryGetValue<T>(out var val)`. Do not store scenario state in step class instance fields.
+- **Strict step matching**: `Tests/reqnroll.json` sets `runtime.missingOrPendingStepsOutcome` to `Error`. A step with no binding, or one still marked pending, **fails the test run** (non-zero exit code) instead of being reported as skipped. There is no silent-skip path anymore.
+  - Register a step with `[StepDefinition("...")]`, not `[Given(...)]`/`[When(...)]`/`[Then(...)]`, whenever the same text is used under more than one keyword in feature files — otherwise only that one keyword binds and the others now error.
+  - Treat `Skipped:` greater than `0` in the `dotnet test` summary as a failure signal to investigate.
 
 ### 4. Mandatory Scenario Tags
 Every scenario must carry:

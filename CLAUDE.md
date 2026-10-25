@@ -52,6 +52,9 @@ This repository is a .NET 10 solution (`TestAutomation.slnx`) containing an ASP.
 3. **Step Definitions**:
    - Must be `sealed` and tagged with `[Binding]`.
    - Use primary constructor DI; store inter-step state in `ScenarioContext`.
+   - **Strict step matching**: `Tests/reqnroll.json` sets `runtime.missingOrPendingStepsOutcome` to `Error`, so a step with no binding or a pending step **fails the test run** (non-zero exit code) instead of being reported as skipped. There is no silent-skip path.
+     - Register a step with `[StepDefinition("...")]` rather than `[Given(...)]`/`[When(...)]`/`[Then(...)]` whenever the same text is used under multiple keywords in feature files, otherwise only that keyword binds and the others now error.
+     - Treat `Skipped:` greater than `0` in the `dotnet test` summary as a failure signal to investigate.
 4. **Test Isolation**:
    - Clean up state before tests using `Given I ensure "{name}" data is cleaned up if already exists`.
    - `[AfterScenario]` hook handles post-test cleanup of created entities.

@@ -11,7 +11,7 @@
     "disableFriendlyTestNames": false
   },
   "runtime": {
-    "missingOrPendingStepsOutcome": "Pending",
+    "missingOrPendingStepsOutcome": "Error",
     "obsoleteBehavior": "Warn",
     "stopAtFirstError": false
   },
