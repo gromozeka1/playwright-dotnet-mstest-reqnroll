@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using Framework.Driver;
 using Microsoft.Playwright;
 using Tests.Models;
@@ -16,6 +16,23 @@ public class ProductsApi(PlaywrightDriver playwrightDriver)
 
     public async Task<IAPIResponse> GetAsync(int id) => await (await Api).GetAsync($"products/{id}");
 
+    public async Task<IAPIResponse> GetAllAsync(string? search = null, string? type = null)
+    {
+        var queryParts = new List<string>();
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            queryParts.Add($"search={Uri.EscapeDataString(search)}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(type))
+        {
+            queryParts.Add($"type={Uri.EscapeDataString(type)}");
+        }
+
+        var url = queryParts.Count > 0 ? $"products?{string.Join("&", queryParts)}" : "products";
+        return await (await Api).GetAsync(url);
+    }
+
     public async Task<IAPIResponse> DeleteAsync(int id) => await (await Api).DeleteAsync($"products/{id}");
 
     public async Task<IAPIResponse> CreateAsync(Product product) => await (await Api).PostAsync("products", new()
@@ -26,7 +43,28 @@ public class ProductsApi(PlaywrightDriver playwrightDriver)
             product.Name,
             product.Description,
             product.ProductType,
-            product.Price
+            product.Price,
+            product.Stock
+        })
+    });
+
+    public async Task<IAPIResponse> CreateRawAsync(string json) => await (await Api).PostAsync("products", new()
+    {
+        Headers = new Dictionary<string, string> { ["Content-Type"] = "application/json" },
+        Data = json
+    });
+
+    public async Task<IAPIResponse> UpdateAsync(int id, Product product) => await (await Api).PutAsync($"products/{id}", new()
+    {
+        Headers = new Dictionary<string, string> { ["Content-Type"] = "application/json" },
+        Data = JsonSerializer.Serialize(new
+        {
+            Id = id,
+            product.Name,
+            product.Description,
+            product.ProductType,
+            product.Price,
+            product.Stock
         })
     });
 
@@ -36,6 +74,14 @@ public class ProductsApi(PlaywrightDriver playwrightDriver)
 
         return data?.Deserialize<Product>(_jsonSerializerOptions)
             ?? throw new JsonException("The Product API returned an empty product response.");
+    }
+
+    public static async Task<List<Product>> ReadListAsync(IAPIResponse response)
+    {
+        JsonElement? data = await response.JsonAsync();
+
+        return data?.Deserialize<List<Product>>(_jsonSerializerOptions)
+            ?? throw new JsonException("The Product API returned an empty product list response.");
     }
 
     public async Task DeleteByNameAsync(string name)

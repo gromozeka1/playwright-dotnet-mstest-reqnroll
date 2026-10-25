@@ -7,6 +7,7 @@ public class Product
     public string Description { get; set; } = string.Empty;
     public int Price { get; set; }
     public ProductType ProductType { get; set; }
+    public int Stock { get; set; }
 }
 
 public enum ProductType

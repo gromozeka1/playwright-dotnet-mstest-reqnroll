@@ -1,4 +1,4 @@
-﻿using Framework.Driver;
+using Framework.Driver;
 using Reqnroll;
 using Tests.Models;
 using Tests.Support;
@@ -14,6 +14,14 @@ public class Hooks(ProductsApi productsApi) : BaseHook()
         if (scenarioContext.TryGetValue(out Product product))
         {
             await productsApi.DeleteByNameAsync(product.Name);
+        }
+
+        if (scenarioContext.TryGetValue("ProductsToDelete", out List<string> toDelete))
+        {
+            foreach (var name in toDelete)
+            {
+                await productsApi.DeleteByNameAsync(name);
+            }
         }
     }
 }
