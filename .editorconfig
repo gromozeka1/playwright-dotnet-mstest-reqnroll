@@ -8,14 +8,8 @@ end_of_line = lf
 insert_final_newline = true
 charset = utf-8
 
-# JSON files
-[*.json]
-indent_size = 2
-end_of_line = lf
-
-# Markdown files
+# Markdown files — trailing whitespace is significant (line-break syntax)
 [*.md]
-end_of_line = lf
 trim_trailing_whitespace = false
 
 # C# files
