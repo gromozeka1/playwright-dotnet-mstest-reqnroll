@@ -11,7 +11,7 @@ public sealed class ProductSteps(ScenarioContext scenarioContext, ProductPage pr
     [Given("I click the Product menu")]
     public async Task GivenIClickTheProductMenu() => await productListPage.CreateProductAsync();
 
-    [Given("I create product with following details")]
+    [StepDefinition("I create product with following details")]
     public async Task GivenICreateProductWithFollowingDetails(DataTable table)
     {
         Product product = table.CreateInstance<Product>();
