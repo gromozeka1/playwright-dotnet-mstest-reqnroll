@@ -1,4 +1,4 @@
----
+﻿---
 applyTo: "**/Dockerfile,**/docker-compose.yml,**/.dockerignore"
 ---
 

@@ -1,39 +1,40 @@
-using System.Reflection;
+﻿using System.Reflection;
 using Framework.Config;
-using Framework.Constants;
-using Framework.Helpers;
+using Microsoft.Playwright;
 
 namespace Framework.Driver;
 
 public class PlaywrightDriver : IDisposable
 {
-    private readonly AsyncLazy<IBrowser> _browser;
-    private readonly AsyncLazy<IBrowserContext> _browserContext;
-    private readonly AsyncLazy<IPage> _page;
-    private readonly AsyncLazy<IAPIRequestContext> _apiRequestContext;
+    private readonly Lazy<Task<IPlaywright>> _playwright;
+    private readonly Lazy<Task<IBrowser>> _browser;
+    private readonly Lazy<Task<IBrowserContext>> _browserContext;
+    private readonly Lazy<Task<IPage>> _page;
+    private readonly Lazy<Task<IAPIRequestContext>> _apiRequestContext;
     private readonly TestSettings _testSettings = ConfigReader.Settings;
     private bool _disposedValue;
 
     public PlaywrightDriver()
     {
-        _browser = new AsyncLazy<IBrowser>(CreateBrowserAsync);
-        _browserContext = new AsyncLazy<IBrowserContext>(CreateBrowserContext);
-        _page = new AsyncLazy<IPage>(CreatePageAsync);
-        _apiRequestContext = new AsyncLazy<IAPIRequestContext>(CreateApiContext);
+        _playwright = new Lazy<Task<IPlaywright>>(Playwright.CreateAsync);
+        _browser = new Lazy<Task<IBrowser>>(CreateBrowserAsync);
+        _browserContext = new Lazy<Task<IBrowserContext>>(CreateBrowserContext);
+        _page = new Lazy<Task<IPage>>(CreatePageAsync);
+        _apiRequestContext = new Lazy<Task<IAPIRequestContext>>(CreateApiContextAsync);
     }
-
-    public Task<IPage> Page => _page.Value;
 
     public Task<IBrowser> Browser => _browser.Value;
 
     public Task<IBrowserContext> BrowserContext => _browserContext.Value;
 
+    public IPage Page => _page.Value.Result;
+
     public Task<IAPIRequestContext> ApiRequestContext => _apiRequestContext.Value;
 
     public async Task<string> TakeScreenshotAsPathAsync(string fileName)
     {
-        var path = $"{Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)}//{fileName}.png";
-        _ = await Page.Result.ScreenshotAsync(new PageScreenshotOptions
+        var path = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!, $"{fileName}.png");
+        _ = await Page.ScreenshotAsync(new PageScreenshotOptions
         {
             FullPage = true,
             Type = ScreenshotType.Png,
@@ -45,58 +46,35 @@ public class PlaywrightDriver : IDisposable
 
     private async Task<IBrowser> CreateBrowserAsync()
     {
-        IPlaywright playwright = await Playwright.CreateAsync();
-        BrowserTypeLaunchOptions options = GetOptions();
-        var driverType = _testSettings.DriverType.ToString().ToLower();
-        return await playwright[driverType].LaunchAsync(options);
-    }
-
-    private BrowserTypeLaunchOptions GetOptions()
-    {
-        var timeout = _testSettings.Timeout ?? SettingConstants.DEFAULT_TIMEOUT_SECONDS;
-        var options = new BrowserTypeLaunchOptions
+        BrowserTypeLaunchOptions options = _testSettings.BrowserTypeLaunchOptions;
+        IBrowserType browserType = _testSettings.BrowserType switch
         {
-            Args = _testSettings.Args,
-            Timeout = TimeConverter.ToMilliseconds(timeout),
-            Headless = _testSettings.Headless,
-            SlowMo = _testSettings.SlowMo
+            BrowserType.Chromium => (await _playwright.Value).Chromium,
+            BrowserType.Firefox => (await _playwright.Value).Firefox,
+            BrowserType.Webkit => (await _playwright.Value).Webkit,
+            _ => throw new ArgumentException($"Unsupported browser type: {_testSettings.BrowserType}"),
         };
 
-        options.Channel = _testSettings.DriverType switch
-        {
-            DriverType.Chrome => "chrome",
-            DriverType.Firefox => "firefox",
-            DriverType.Edge => "msedge",
-            DriverType.Chromium => "chromium",
-            _ => "chromium"
-        };
-
-        return options;
+        return await browserType.LaunchAsync(options);
     }
 
-    private async Task<IAPIRequestContext> CreateApiContext()
+    private async Task<IAPIRequestContext> CreateApiContextAsync()
     {
-        IPlaywright playwright = await Playwright.CreateAsync();
-
-        return await playwright.APIRequest.NewContextAsync(new APIRequestNewContextOptions()
-        {
-            BaseURL = _testSettings.ApplicationApiUrl,
-            // can be moved to config
-            IgnoreHTTPSErrors = true
-        });
+        APIRequestNewContextOptions options = _testSettings.APIRequestNewContextOptions;
+        return await (await _playwright.Value).APIRequest.NewContextAsync(options);
     }
 
-    private async Task<IPage> CreatePageAsync()
+    private async Task<IPage> CreatePageAsync() => await (await _browserContext.Value).NewPageAsync();
+
+    private async Task<IBrowserContext> CreateBrowserContext()
     {
-        return await (await _browser).NewPageAsync(new BrowserNewPageOptions()
+        var harPath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!, $"sut-{Guid.NewGuid():N}.har");
+        return await (await _browser.Value).NewContextAsync(new BrowserNewContextOptions
         {
-            //ToDo: move to config
-            RecordHarPath = $"{Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)}/eapp.har",
+            RecordHarPath = harPath,
             RecordHarUrlFilterString = "**/Product/**"
         });
     }
-
-    private async Task<IBrowserContext> CreateBrowserContext() => await (await _browser).NewContextAsync();
 
     protected virtual void Dispose(bool disposing)
     {
@@ -107,12 +85,12 @@ public class PlaywrightDriver : IDisposable
 
         if (disposing)
         {
-            // TODO: dispose managed state (managed objects)
+            // dispose managed state (managed objects)
             if (_browser.IsValueCreated)
             {
                 Task.Run(async () =>
                 {
-                    await (await Page).CloseAsync();
+                    await Page.CloseAsync();
                     await Task.Delay(TimeSpan.FromMilliseconds(500));
                     await (await BrowserContext).CloseAsync();
                     await Task.Delay(TimeSpan.FromMilliseconds(500));
@@ -123,19 +101,16 @@ public class PlaywrightDriver : IDisposable
 
             if (_apiRequestContext.IsValueCreated)
             {
-                _ = Task.Run(async () =>
-                {
-                    await (await ApiRequestContext).DisposeAsync();
-                });
+                _ = Task.Run(async () => await (await ApiRequestContext).DisposeAsync());
             }
         }
 
-        // TODO: free unmanaged resources (unmanaged objects) and override finalizer
-        // TODO: set large fields to null
+        // free unmanaged resources (unmanaged objects) and override finalizer
+        // set large fields to null
         _disposedValue = true;
     }
 
-    // // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
+    // override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
     // ~PlaywrightDriver()
     // {
     //     // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method

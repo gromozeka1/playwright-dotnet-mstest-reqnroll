@@ -1,10 +1,8 @@
-namespace Framework.Config;
+﻿namespace Framework.Config;
 
 public enum DriverType
 {
-    Chrome,
-    Firefox,
-    Edge,
     Chromium,
-    Opera
+    Firefox,
+    Webkit,
 }

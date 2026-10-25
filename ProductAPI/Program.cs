@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using ProductAPI.Models;
 
 namespace ProductAPI;
@@ -25,7 +25,7 @@ public class Program
         using (IServiceScope scope = app.Services.CreateScope())
         {
             ProductContext dbContext = scope.ServiceProvider.GetRequiredService<ProductContext>();
-            _ = dbContext.Database.EnsureCreated();
+            dbContext.Database.Migrate();
         }
 
         // Configure the HTTP request pipeline.

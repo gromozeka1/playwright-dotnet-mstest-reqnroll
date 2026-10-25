@@ -12,6 +12,8 @@ public class ProductPage(PlaywrightDriver playwrightDriver) : BasePage(playwrigh
 
     private ILocator TxtPrice => Page.Locator("#Price");
 
+    private ILocator TxtStock => Page.Locator("#Stock");
+
     private ILocator SelectProduct => Page.GetByRole(AriaRole.Combobox, new() { Name = "Product type" });
 
     public async Task CreateProduct(Product product)
@@ -21,6 +23,7 @@ public class ProductPage(PlaywrightDriver playwrightDriver) : BasePage(playwrigh
         await TxtName.FillAsync(product.Name);
         await TxtDescription.FillAsync(product.Description);
         await TxtPrice.FillAsync(product.Price.ToString());
+        await TxtStock.FillAsync(product.Stock.ToString());
         _ = await SelectProduct.SelectOptionAsync(((int)product.ProductType).ToString());
     }
 

@@ -1,4 +1,4 @@
-@model WebApp.Models.ProductViewModel
+﻿@model WebApp.Models.ProductViewModel
 @{
     var submitLabel = ViewData["SubmitLabel"] as string ?? "Save";
 }
@@ -25,6 +25,11 @@
         <label asp-for="Price" class="form-label"></label>
         <input asp-for="Price" class="form-control" min="0" />
         <span asp-validation-for="Price" class="text-danger"></span>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Stock" class="form-label"></label>
+        <input asp-for="Stock" type="number" class="form-control" min="0" />
+        <span asp-validation-for="Stock" class="text-danger"></span>
     </div>
     <button type="submit" class="btn btn-primary">@submitLabel</button>
     <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>

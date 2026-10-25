@@ -1,12 +1,19 @@
+﻿using System.Text.Json.Serialization;
+using Microsoft.Playwright;
+
 namespace Framework.Config;
 
 public class TestSettings
 {
-    public float? Timeout { get; set; }
-    public DriverType DriverType { get; set; }
+    [JsonPropertyName("browserType")]
+    public required string BrowserType { get; set; }
+
+    [JsonPropertyName("applicationUrl")]
     public required string ApplicationUrl { get; set; }
-    public string? ApplicationApiUrl { get; set; }
-    public string[]? Args { get; set; }
-    public bool? Headless { get; set; }
-    public float? SlowMo { get; set; }
+
+    [JsonPropertyName("browserOptions")]
+    public BrowserTypeLaunchOptions BrowserTypeLaunchOptions { get; set; } = new();
+
+    [JsonPropertyName("apiOptions")]
+    public APIRequestNewContextOptions APIRequestNewContextOptions { get; set; } = new();
 }

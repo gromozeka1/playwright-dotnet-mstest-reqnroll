@@ -29,6 +29,22 @@
         "tags": [
           "Products"
         ],
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -227,6 +243,9 @@
   "components": {
     "schemas": {
       "Product": {
+        "required": [
+          "name"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -238,12 +257,13 @@
             "format": "int32"
           },
           "name": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string"
           },
           "description": {
+            "maxLength": 1000,
+            "minLength": 0,
             "type": [
               "null",
               "string"
@@ -253,6 +273,18 @@
             "$ref": "#/components/schemas/ProductType"
           },
           "price": {
+            "maximum": 2147483647,
+            "minimum": 0,
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "stock": {
+            "maximum": 2147483647,
+            "minimum": 0,
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "integer",

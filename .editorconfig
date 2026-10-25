@@ -1,11 +1,16 @@
-# Remove the line below if you want to inherit .editorconfig settings from higher directories
+﻿# Remove the line below if you want to inherit .editorconfig settings from higher directories
 root = true
 
 [*]
 indent_style = space
 indent_size = 2
+end_of_line = lf
 insert_final_newline = true
 charset = utf-8
+
+# Markdown files — trailing whitespace is significant (line-break syntax)
+[*.md]
+trim_trailing_whitespace = false
 
 # C# files
 [*.cs]
@@ -18,7 +23,7 @@ indent_style = space
 tab_width = 4
 
 # New line preferences
-end_of_line = crlf
+end_of_line = lf
 insert_final_newline = false
 
 #### .NET Code Actions ####
@@ -269,3 +274,5 @@ dotnet_naming_style.begins_with_underscore.capitalization = camel_case
 
 # IDE0290: Use primary constructor
 dotnet_diagnostic.IDE0290.severity = none
+# IDE0305: Simplify collection initialization
+dotnet_diagnostic.IDE0305.severity = none
