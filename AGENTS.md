@@ -123,8 +123,13 @@ Tag enforcement occurs in `BaseHook.VerifyMandatoryScenarioTags` at `Order = int
 - ProductAPI: `http://localhost:5044` (endpoints: `GET/POST/PUT/DELETE api/products`).
 - Inside Docker Compose: WebApp reaches ProductAPI at `http://productapi:8080/`.
 
+### Configuration Files
+- `Tests/appsettings.json` - local runs: headed browser, `slowMo` 500.
+- `Tests/appsettings.CI.json` - CI/CD runs: headless browser, `slowMo` 0.
+- `ConfigReader` selects the CI file automatically when the `CI` environment variable is `true` (set by GitHub Actions and most CI servers); otherwise it loads the local file. A missing CI file falls back to the local one.
+
 ### Configuration Overrides
-Test endpoints and execution parameters can be overridden with `TEST_<Setting>` environment variables (e.g., `TEST_Headless=true`, `TEST_ApplicationUrl=http://localhost:5168`, `TEST_APIRequestNewContextOptions__BaseURL=http://localhost:5044/api/`).
+Test endpoints and execution parameters can be overridden with `TEST_<Setting>` environment variables (e.g., `TEST_Headless=true`, `TEST_ApplicationUrl=http://localhost:5168`, `TEST_APIRequestNewContextOptions__BaseURL=http://localhost:5044/api/`). Overrides are applied after the config file is loaded, so they win over both files; nested settings are addressed by their leaf name (`TEST_Headless`) or by a `__`-separated path of C# property names.
 
 ### ProductType Enum Consistency Note
 `ProductType` is defined independently in three projects:
