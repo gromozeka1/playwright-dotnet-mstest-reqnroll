@@ -1,4 +1,4 @@
-@api @local
+﻿@api @local
 Feature: Product API
 
 Scenario: Get an existing product

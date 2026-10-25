@@ -1,4 +1,4 @@
----
+﻿---
 name: docker-compose-stack
 description: Use when changing, starting, debugging, or documenting the local Docker Compose stack for ProductAPI and WebApp.
 ---

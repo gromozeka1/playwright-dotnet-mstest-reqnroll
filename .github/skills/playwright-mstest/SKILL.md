@@ -1,4 +1,4 @@
----
+﻿---
 name: playwright-mstest
 description: Use when changing browser automation, Playwright driver lifecycle/configuration, or MSTest-based browser tests in the Framework project.
 ---

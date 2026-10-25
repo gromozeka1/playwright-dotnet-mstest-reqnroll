@@ -1,4 +1,4 @@
----
+﻿---
 name: playwright-mstest
 description: Builds and reviews browser automation framework work using the repository's Playwright .NET and MSTest stack.
 ---

@@ -1,4 +1,4 @@
-# playwright-dotnet-mstest-reqnroll
+﻿# playwright-dotnet-mstest-reqnroll
 
 Demo repository for a .NET browser and API test automation framework using Playwright and MSTest. The system under test (SUT) is a product-management application: an ASP.NET Core MVC WebApp backed by an ASP.NET Core ProductAPI and SQLite.
 

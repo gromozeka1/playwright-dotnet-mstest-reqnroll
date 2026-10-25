@@ -1,4 +1,4 @@
-using Framework.Driver;
+﻿using Framework.Driver;
 using Microsoft.Playwright;
 
 namespace Tests.Pages;

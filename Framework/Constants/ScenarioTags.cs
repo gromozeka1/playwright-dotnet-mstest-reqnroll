@@ -1,4 +1,4 @@
-namespace Framework.Constants;
+﻿namespace Framework.Constants;
 
 public class ScenarioTags
 {

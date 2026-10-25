@@ -1,4 +1,4 @@
----
+﻿---
 name: aspnet-core-efcore
 description: Use when implementing or changing the ProductAPI, WebApp, their HTTP contract, EF Core/SQLite persistence, or ASP.NET Core configuration in this repository.
 ---

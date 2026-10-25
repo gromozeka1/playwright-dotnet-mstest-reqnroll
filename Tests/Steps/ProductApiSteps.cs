@@ -1,4 +1,4 @@
-using AwesomeAssertions;
+﻿using AwesomeAssertions;
 using Microsoft.Playwright;
 using Reqnroll;
 using Tests.Models;

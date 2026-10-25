@@ -1,4 +1,4 @@
----
+﻿---
 name: dotnet-web
 description: Implements and reviews changes to this repository's ASP.NET Core MVC app, Product API, EF Core/SQLite persistence, and .NET configuration.
 ---

@@ -1,4 +1,4 @@
-<Solution>
+﻿<Solution>
   <Project Path="Framework/Framework.csproj" />
   <Project Path="ProductAPI/ProductAPI.csproj" Id="79e57407-eed3-4c19-9415-5f991571b062" />
   <Project Path="Tests/Tests.csproj" Id="b5c41b7f-a6f4-49d6-9d4b-0d93a72c837b" />
