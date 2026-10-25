@@ -19,6 +19,9 @@ public class ProductViewModel
 
     [Range(0, int.MaxValue)]
     public int Price { get; set; }
+
+    [Range(0, int.MaxValue)]
+    public int Stock { get; set; }
 }
 
 public enum ProductType

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using WebApp.Models;
 using WebApp.Services;
 
@@ -15,11 +15,17 @@ public class ProductsController : Controller
         _logger = logger;
     }
 
-    public async Task<IActionResult> Index(CancellationToken cancellationToken)
+    public async Task<IActionResult> Index(
+        string? search,
+        string? type,
+        CancellationToken cancellationToken)
     {
+        ViewBag.Search = search;
+        ViewBag.Type = type;
+
         try
         {
-            return View(await _productApi.GetAllAsync(cancellationToken));
+            return View(await _productApi.GetAllAsync(search, type, cancellationToken));
         }
         catch (HttpRequestException exception)
         {
@@ -45,7 +51,14 @@ public class ProductsController : Controller
 
         try
         {
-            await _productApi.CreateAsync(product, cancellationToken);
+            (bool success, string? conflict) = await _productApi.CreateAsync(product, cancellationToken);
+
+            if (!success)
+            {
+                ModelState.AddModelError(string.Empty, conflict ?? "A product with this name already exists.");
+                return View(product);
+            }
+
             TempData["SuccessMessage"] = "Product created successfully.";
             return RedirectToAction(nameof(Index));
         }
@@ -87,7 +100,15 @@ public class ProductsController : Controller
 
         try
         {
-            if (!await _productApi.UpdateAsync(product, cancellationToken))
+            (bool success, string? conflict) = await _productApi.UpdateAsync(product, cancellationToken);
+
+            if (!success && conflict is not null)
+            {
+                ModelState.AddModelError(string.Empty, conflict);
+                return View(product);
+            }
+
+            if (!success)
             {
                 return NotFound();
             }
