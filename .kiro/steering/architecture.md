@@ -6,8 +6,8 @@
 |---|---|
 | `Framework/` | Shared test infrastructure: Playwright driver, config, base page/hook, ExtentReports helper, scenario tag constants |
 | `Tests/` | Reqnroll/MSTest BDD tests: feature files, step definitions, page objects, hooks, support helpers, test models |
-| `WebApp/` | ASP.NET Core MVC application — the UI under test |
-| `ProductAPI/` | ASP.NET Core Web API — the API under test, EF Core + SQLite persistence |
+
+The SUT (`WebApp`, `ProductAPI`) is **not** in this repository: it runs from Docker Hub images (`gromozeka1/hardpoint-webapp`, `gromozeka1/hardpoint-productapi`; source: https://github.com/gromozeka1/sut-hardpoint).
 
 Solution file: `TestAutomation.slnx` (.NET 10, `global.json` pins SDK to `10.0.100`).
 
@@ -15,11 +15,11 @@ Solution file: `TestAutomation.slnx` (.NET 10, `global.json` pins SDK to `10.0.1
 
 ```
 Tests  ──project ref──▶  Framework
-Tests  ──HTTP (runtime)──▶  ProductAPI   (via ProductsApi helper + Playwright APIRequestContext)
-WebApp ──HTTP (runtime)──▶  ProductAPI   (via ProductApiClient)
+Tests  ──HTTP (runtime)──▶  ProductAPI   (via Playwright APIRequestContext, localhost:5044)
+Tests  ──browser (runtime)──▶  WebApp     (via Playwright, localhost:5168)
 ```
 
-`Tests` and `WebApp` have no compile-time reference to `ProductAPI`. The test project mirrors the API's `Product` / `ProductType` models in `Tests/Models/` rather than sharing them.
+`Tests` has no compile-time reference to either SUT service. The test project mirrors the API's `Product` / `ProductType` models in `Tests/Models/` rather than sharing them.
 
 ## Key Design Patterns
 

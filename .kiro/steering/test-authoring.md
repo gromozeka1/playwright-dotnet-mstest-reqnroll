@@ -147,7 +147,7 @@ Product product = await ProductsApi.ReadAsync(response);
 
 ## Models
 
-`Tests/Models/Product.cs` and `ProductType` mirror `ProductAPI/Models/`. They are intentionally separate — the test project does not reference the API project. When the API model changes, update both.
+`Tests/Models/Product.cs` and `ProductType` mirror the SUT's API models (`ProductAPI/Models/` in https://github.com/gromozeka1/sut-hardpoint). They are intentionally separate — the test project does not reference the API project. When the API model changes, update both and bump `SUT_TAG` in `docker-compose.yml` to test against the released image.
 
 Note the existing typo: the enum value is `PERIPHARALS` (not `PERIPHERALS`) in both the API and test models. Match it exactly.
 

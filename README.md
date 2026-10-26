@@ -1,14 +1,12 @@
 ﻿# playwright-dotnet-mstest-reqnroll
 
-Demo repository for a .NET browser and API test automation framework using Playwright and MSTest. The system under test (SUT) is a product-management application: an ASP.NET Core MVC WebApp backed by an ASP.NET Core ProductAPI and SQLite.
+Demo repository for a .NET browser and API test automation framework using Playwright and MSTest. The system under test (SUT) is a product-management application: an ASP.NET Core MVC WebApp backed by an ASP.NET Core ProductAPI and SQLite, running from pre-built images on Docker Hub.
 
 ## Repository structure
 
 - `Framework/` contains shared Playwright support, including browser and API request contexts, driver lifecycle, and test settings.
 - `Tests/` contains Reqnroll feature files (`Features/`), step definitions (`Steps/`), hooks including Extent reporting (`Hooks/`), page objects, an API helper, and test configuration. UI scenarios are tagged `@ui`; API scenarios exercise ProductAPI through Playwright's API request context. Extent writes `TestReports.html` to the test output folder.
-- `WebApp/` is the MVC user interface for viewing and managing products. It calls ProductAPI through `ProductApiClient`.
-- `ProductAPI/` provides the product HTTP API and EF Core/SQLite persistence.
-- `docker-compose.yml` and the service Dockerfiles define the local containerized SUT.
+- `docker-compose.yml` runs the SUT from its published Docker Hub images (`gromozeka1/hardpoint-webapp`, `gromozeka1/hardpoint-productapi`); the SUT source lives in the separate [gromozeka1/sut-hardpoint](https://github.com/gromozeka1/sut-hardpoint) repository.
 - `TestAutomation.slnx` groups the solution projects.
 
 The solution targets .NET 10. Tests use Reqnroll with MSTest as the runner.
@@ -33,11 +31,15 @@ Two config files are used: `Tests/appsettings.json` for local runs (headed brows
 
 Prerequisites: Docker Desktop or Docker Engine with Docker Compose v2, with the Docker daemon running. Run these commands from the repository root; ensure ports `5044` and `5168` are available.
 
-Start both services and build their images:
+Pull and start both services from their published Docker Hub images (no build step — the images are built by the SUT repository's CI):
 
 ```sh
-docker compose up --build -d
+docker compose up -d
 ```
+
+The images default to the pinned release `1.0.0`; override with the `SUT_TAG` variable (e.g. `SUT_TAG=latest docker compose up -d` or a `SUT_TAG=latest` line in a `.env` file) to test another release, a `sha-<shortsha>` build, or `latest`.
+
+Docker pulls the images automatically if they are missing locally.
 
 The WebApp is available at `http://localhost:5168` and ProductAPI at `http://localhost:5044`. Inside the Compose network, WebApp connects to ProductAPI at `http://productapi:8080/`; the host URLs above are for accessing the services and tests from outside the containers.
 
