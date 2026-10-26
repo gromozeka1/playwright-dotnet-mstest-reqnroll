@@ -1,13 +1,13 @@
 ---
 name: aspnet-core-efcore
-description: Use when implementing or changing the ProductAPI, WebApp, their HTTP contract, EF Core/SQLite persistence, or ASP.NET Core configuration in this repository.
+description: Use when the SUT's HTTP contract, API behavior, EF Core/SQLite persistence, or ASP.NET Core configuration changes and the test suite must follow.
 ---
 
-# ASP.NET Core and EF Core in this repository
+# ASP.NET Core and EF Core — SUT contract guidance
 
-- Start from the existing project boundaries: `ProductAPI/` owns the `api/products` endpoints and `ProductContext`; `WebApp/` owns MVC routes/views and `ProductApiClient`.
-- Inspect both the API controller and typed client before changing a route, payload, status code, or error behavior. Keep them compatible or update both in the same change.
-- Keep SQLite database path and API base URL configurable through the established application configuration; do not hard-code developer-specific paths or addresses.
-- Match existing async patterns and pass cancellation tokens to HTTP/EF operations when the call chain supports them.
+- The ProductAPI and WebApp source lives in https://github.com/gromozeka1/sut-hardpoint, not in this repository. Make service changes there, release new images, and bump `SUT_TAG` in `docker-compose.yml` to test them.
+- Inspect both sides of the contract before adapting to a change: the SUT controller and this repository's consumers (`Tests/Support/ProductsApi.cs`, page objects, feature files). Keep them compatible or update both in the same change.
+- Keep the SQLite database path and API base URL configurable through the established configuration (`ProductApi:BaseUrl` / `ProductApi__BaseUrl`); do not hard-code developer-specific paths or addresses.
+- Match existing async patterns and pass cancellation tokens to HTTP operations when the call chain supports them.
 - Add or update corresponding BDD tests in `Tests/Features/` and step definitions in `Tests/Steps/` to cover new API behaviors or UI views.
-- Build with `dotnet build TestAutomation.slnx`. If the change affects service integration, also validate the Compose configuration and run the services when Docker is available.
+- Build with `dotnet build TestAutomation.slnx`, start the SUT (`docker compose up -d`), and run the affected tests when Docker is available.

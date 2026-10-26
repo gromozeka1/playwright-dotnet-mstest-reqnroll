@@ -1,9 +1,9 @@
-﻿services:
+# The SUT is not built from source in this repository: both images are
+# published to Docker Hub by https://github.com/gromozeka1/sut-hardpoint.
+# Override the release with SUT_TAG=1.0.0|latest|sha-<sha> (env var or .env).
+services:
   productapi:
-    image: productapi
-    build:
-      context: .
-      dockerfile: ProductAPI/Dockerfile
+    image: gromozeka1/hardpoint-productapi:${SUT_TAG:-1.0.0}
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_HTTP_PORTS: "8080"
@@ -13,10 +13,7 @@
       - productapi-data:/app/Database
 
   webapp:
-    image: webapp
-    build:
-      context: .
-      dockerfile: WebApp/Dockerfile
+    image: gromozeka1/hardpoint-webapp:${SUT_TAG:-1.0.0}
     environment:
       ASPNETCORE_HTTP_PORTS: "8080"
       ProductApi__BaseUrl: http://productapi:8080/

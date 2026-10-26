@@ -32,7 +32,7 @@ jobs:
     - name: Install Playwright browsers
       run: pwsh "$OUTPUT_DIR/playwright.ps1" install --with-deps chromium
     - name: Start application
-      run: docker compose up -d --build --wait --wait-timeout 180
+      run: docker compose up -d --pull always --wait --wait-timeout 180
     - name: Wait for application
       run: |
         curl --fail --silent --retry 30 --retry-delay 2 --retry-all-errors http://localhost:5168/ > /dev/null

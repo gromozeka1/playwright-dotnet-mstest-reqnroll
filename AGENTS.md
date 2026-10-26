@@ -2,21 +2,18 @@
 
 ## Solution Architecture & Module Organization
 
-This repository contains a .NET 10 solution (`TestAutomation.slnx`) pinned by `global.json` (`10.0.100`), consisting of four projects:
+This repository contains a .NET 10 solution (`TestAutomation.slnx`) pinned by `global.json` (`10.0.100`), consisting of two projects. The system under test (SUT) is **not** part of this repository: it runs from published Docker Hub images (`gromozeka1/hardpoint-webapp`, `gromozeka1/hardpoint-productapi`), whose source lives in the separate [gromozeka1/sut-hardpoint](https://github.com/gromozeka1/sut-hardpoint) repository.
 
 | Project | Type | Description |
 |---|---|---|
 | `Framework/` | Class Library | Shared Playwright test infrastructure: driver lifecycle, config reader, `BasePage`, `BaseHook`, `ExtentReportManager`, and scenario tag constants. |
 | `Tests/` | MSTest / Reqnroll | BDD automated test suite: Gherkin feature files (`Features/`), step definitions (`Steps/`), page objects (`Pages/`), hooks (`Hooks/`), API helpers (`Support/`), and test models (`Models/`). |
-| `WebApp/` | ASP.NET Core MVC | The web user interface under test. Interacts with `ProductAPI` through the typed `ProductApiClient` (`http://localhost:5168` local / `webapp:8080` Docker). |
-| `ProductAPI/` | ASP.NET Core Web API | REST service with SQLite persistence (`ProductList.db`) via EF Core and OpenAPI generation (`http://localhost:5044` local / `productapi:8080` Docker). |
 
 ### Dependency Flow & Isolation
 - `Tests` references `Framework`.
-- `Tests` and `WebApp` have **no compile-time reference** to `ProductAPI`.
+- `Tests` has **no compile-time reference** to the SUT; it talks to the services solely over HTTP (Playwright API request context and the browser).
 - `Tests` mirrors API models in `Tests/Models/` (POCOs) rather than sharing assemblies.
-- `WebApp` interacts with `ProductAPI` solely via HTTP through `ProductApiClient`.
-- Local orchestration is defined in `docker-compose.yml`.
+- Local orchestration is defined in `docker-compose.yml`, which pulls the SUT images from Docker Hub (version pinned via `SUT_TAG`, default `1.0.0`).
 
 ---
 
@@ -32,7 +29,7 @@ dotnet build TestAutomation.slnx
 pwsh Tests/bin/Debug/net10.0/playwright.ps1 install chromium
 
 # Start the SUT services via Docker Compose
-docker compose up --build -d
+docker compose up -d
 
 # Run MSTest / Reqnroll test suite (SUT must be running)
 dotnet test Tests/Tests.csproj
@@ -132,11 +129,11 @@ Tag enforcement occurs in `BaseHook.VerifyMandatoryScenarioTags` at `Order = int
 Test endpoints and execution parameters can be overridden with `TEST_<Setting>` environment variables (e.g., `TEST_Headless=true`, `TEST_ApplicationUrl=http://localhost:5168`, `TEST_APIRequestNewContextOptions__BaseURL=http://localhost:5044/api/`). Overrides are applied after the config file is loaded, so they win over both files; nested settings are addressed by their leaf name (`TEST_Headless`) or by a `__`-separated path of C# property names.
 
 ### ProductType Enum Consistency Note
-`ProductType` is defined independently in three projects:
-- `ProductAPI/Models/ProductType.cs` (`CPU`, `MONITOR`, `PERIPHARALS`, `EXTERNAL`)
+`ProductType` is defined independently in three places — the test mirror plus two files in the SUT repository ([gromozeka1/sut-hardpoint](https://github.com/gromozeka1/sut-hardpoint)):
+- SUT `ProductAPI/Models/ProductType.cs` (`CPU`, `MONITOR`, `PERIPHARALS`, `EXTERNAL`)
 - `Tests/Models/Product.cs` (`CPU`, `MONITOR`, `PERIPHARALS`, `EXTERNAL`)
-- `WebApp/Models/ProductViewModel.cs` (`CPU`, `MONITOR`, `PERIPHERALS`, `EXTERNAL`)
-Note the spelling difference (`PERIPHARALS` vs `PERIPHERALS`). Ensure all definitions remain aligned if updated.
+- SUT `WebApp/Models/ProductViewModel.cs` (`CPU`, `MONITOR`, `PERIPHERALS`, `EXTERNAL`)
+Note the spelling difference (`PERIPHARALS` vs `PERIPHERALS`). Ensure all definitions remain aligned if updated — changing the SUT side requires a new image release and a `SUT_TAG` bump in `docker-compose.yml`.
 
 ---
 

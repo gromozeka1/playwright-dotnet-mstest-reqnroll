@@ -14,7 +14,7 @@ WebApp proxies all data through ProductAPI via `ProductApiClient` (typed `HttpCl
 ```
 GET    api/products          → 200 []Product
 GET    api/products/{id}     → 200 Product | 404
-POST   api/products          → 201 Product | 500 (already exists)
+POST   api/products          → 201 Product | 409 (already exists)
 PUT    api/products/{id}     → 204 | 404 | 400
 DELETE api/products/{id}     → 204 | 404
 GET    /                     → 200 "Hello World!" (health probe)
@@ -32,13 +32,13 @@ Seed data is applied via `Database.EnsureCreated()` at startup — it is only in
 
 ## ProductType Enum
 
-Defined in three places — keep them in sync when adding new values:
+Defined in three places — keep them in sync when adding new values. The two SUT files live in https://github.com/gromozeka1/sut-hardpoint (changing them requires a new image release and a `SUT_TAG` bump here):
 
 | Location | Values |
 |---|---|
-| `ProductAPI/Models/ProductType.cs` | `CPU`, `MONITOR`, `PERIPHARALS`, `EXTERNAL` |
+| SUT `ProductAPI/Models/ProductType.cs` | `CPU`, `MONITOR`, `PERIPHARALS`, `EXTERNAL` |
 | `Tests/Models/Product.cs` | `CPU`, `MONITOR`, `PERIPHARALS`, `EXTERNAL` |
-| `WebApp/Models/ProductViewModel.cs` | `CPU`, `MONITOR`, `PERIPHERALS`, `EXTERNAL` |
+| SUT `WebApp/Models/ProductViewModel.cs` | `CPU`, `MONITOR`, `PERIPHERALS`, `EXTERNAL` |
 
 Note: `PERIPHARALS` (API + Tests) vs `PERIPHERALS` (WebApp) is an existing inconsistency. Do not silently correct it without updating all three files and any database seed data.
 
@@ -51,8 +51,8 @@ dotnet build TestAutomation.slnx
 # 2. Install Chromium (after build, once per machine)
 pwsh Tests/bin/Debug/net10.0/playwright.ps1 install chromium
 
-# 3. Start services
-docker compose up --build -d
+# 3. Start services (pulls the published SUT images; pin via SUT_TAG, default 1.0.0)
+docker compose up -d
 
 # 4. Run tests (services must be up first)
 dotnet test Tests/Tests.csproj
@@ -156,13 +156,13 @@ Variable names are case-insensitive against the property name. Arrays are comma-
 
 ## Docker Compose
 
-`docker-compose.yml` defines two services:
+`docker-compose.yml` defines two services running the pre-built images published to Docker Hub (source: https://github.com/gromozeka1/sut-hardpoint; version pinned by `SUT_TAG`, default `1.0.0`):
 
-- **productapi** — builds `ProductAPI/Dockerfile`; mounts volume `productapi-data:/app/Database` to persist SQLite across restarts; runs with `ASPNETCORE_ENVIRONMENT=Development` (enables OpenAPI at `/openapi/v1.json`).
-- **webapp** — builds `WebApp/Dockerfile`; sets `ProductApi__BaseUrl=http://productapi:8080/` to reach the API over the Docker internal network; depends on `productapi`.
+- **productapi** — image `gromozeka1/hardpoint-productapi`; mounts volume `productapi-data:/app/Database` to persist SQLite across restarts; runs with `ASPNETCORE_ENVIRONMENT=Development` (enables OpenAPI at `/openapi/v1.json`).
+- **webapp** — image `gromozeka1/hardpoint-webapp`; sets `ProductApi__BaseUrl=http://productapi:8080/` to reach the API over the Docker internal network; depends on `productapi`.
 
 ```powershell
-docker compose up --build -d    # start
+docker compose up -d           # start (pulls missing images)
 docker compose down             # stop (volume is preserved)
 docker compose down -v          # stop and delete database volume (resets seed data)
 ```
@@ -174,19 +174,14 @@ Trigger: push or PR to `main`. Runner: `ubuntu-latest`, 20-minute timeout.
 Key steps:
 1. `dotnet build Tests/Tests.csproj -c Release -o artifacts/tests`
 2. `pwsh artifacts/tests/playwright.ps1 install --with-deps chromium`
-3. `docker compose up -d --build --wait --wait-timeout 180`
+3. `docker compose up -d --pull always --wait --wait-timeout 180`
 4. Health-check both services with `curl --retry 30`
 5. `dotnet test artifacts/tests/Tests.dll` with `TEST_Headless=true`
 6. Upload `TestReports.html` + `*.png` screenshots as `test-results` artifact (always, even on failure)
 7. `docker compose down`
 
-The CI build only builds `Tests.csproj` (which transitively pulls Framework); it does not build WebApp or ProductAPI separately — those are built inside their Docker images.
+The CI build only builds `Tests.csproj` (which transitively pulls Framework); it never builds the SUT — CI pulls the published Docker Hub images via `docker compose up --pull always`.
 
 ## WebApp Configuration
 
-`WebApp/appsettings.json`:
-```json
-{ "ProductApi": { "BaseUrl": "http://localhost:5044/" } }
-```
-
-Overridden in Docker Compose with `ProductApi__BaseUrl: http://productapi:8080/` (double-underscore notation for nested keys in ASP.NET Core environment variables).
+The WebApp image defaults to `ProductApi:BaseUrl = http://localhost:5044/` in its own `appsettings.json` (SUT repository). Docker Compose overrides it with `ProductApi__BaseUrl: http://productapi:8080/` (double-underscore notation for nested keys in ASP.NET Core environment variables) so the UI reaches ProductAPI over the Compose network.

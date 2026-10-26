@@ -1,13 +1,12 @@
 # CLAUDE.md - Assistant Guidelines
 
 ## Solution Overview
-This repository is a .NET 10 solution (`TestAutomation.slnx`) containing an ASP.NET Core MVC Web application, an ASP.NET Core REST API, a shared Playwright automation framework, and an end-to-end BDD test suite using Reqnroll and MSTest.
+This repository is a .NET 10 solution (`TestAutomation.slnx`) containing a shared Playwright automation framework and an end-to-end BDD test suite using Reqnroll and MSTest. The system under test — an ASP.NET Core MVC WebApp (`localhost:5168`) backed by an ASP.NET Core REST API (`localhost:5044`) — is **not** part of this repository: it runs from published Docker Hub images (`gromozeka1/hardpoint-webapp`, `gromozeka1/hardpoint-productapi`), whose source lives in [gromozeka1/sut-hardpoint](https://github.com/gromozeka1/sut-hardpoint).
 
 ### Projects
 - `Framework/`: Shared Playwright driver infrastructure, lifecycle management, reporting, and base classes (`BasePage`, `BaseHook`).
 - `Tests/`: BDD tests with Reqnroll and MSTest. Contains `.feature` files, step definitions, page objects, and API test helpers.
-- `WebApp/`: ASP.NET Core MVC application representing the user interface under test (`localhost:5168`).
-- `ProductAPI/`: ASP.NET Core Web API with SQLite persistence via EF Core (`localhost:5044`).
+- `docker-compose.yml`: Runs the SUT images from Docker Hub (version pinned by `SUT_TAG`, default `1.0.0`).
 
 ---
 
@@ -18,7 +17,7 @@ This repository is a .NET 10 solution (`TestAutomation.slnx`) containing an ASP.
 - `pwsh Tests/bin/Debug/net10.0/playwright.ps1 install chromium` - Downloads Playwright browser binaries (run once after build).
 
 ### SUT Execution (Docker Compose)
-- `docker compose up --build -d` - Builds and launches `productapi` (port 5044) and `webapp` (port 5168).
+- `docker compose up -d` - Pulls and launches the SUT images from Docker Hub (`productapi` port 5044, `webapp` port 5168).
 - `docker compose down` - Stops services, preserving SQLite data volume.
 - `docker compose down -v` - Stops services and clears data volume.
 
