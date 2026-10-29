@@ -9,36 +9,104 @@ namespace Framework.Config;
 public static class ConfigReader
 {
     private const string _environmentPrefix = "TEST_";
+    private const string _configFileVariable = "TEST_CONFIG_FILE";
     private const string _localConfigFileName = "appsettings.json";
     private const string _ciConfigFileName = "appsettings.CI.json";
     private static readonly string[] _pathSeparator = ["__"];
 
-    public static TestSettings Settings { get; set; } = ReadConfig();
+    // Lazy rather than a field initialiser: a missing or malformed config file then surfaces
+    // as the exception raised below, instead of a TypeInitializationException that hides it.
+    private static Lazy<TestSettings> _settings = new(ReadConfig);
+
+    public static TestSettings Settings
+    {
+        get => _settings.Value;
+        set => _settings = new Lazy<TestSettings>(() => value);
+    }
+
+    /// <summary>
+    /// Discards the cached settings so the next <see cref="Settings"/> access re-reads the
+    /// configuration file and reapplies the environment overrides.
+    /// </summary>
+    public static void Reload() => _settings = new Lazy<TestSettings>(ReadConfig);
 
     private static TestSettings ReadConfig()
     {
-        var assemblyDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? throw new InvalidOperationException("Unable to determine the executing assembly's directory.");
-        var configFilePath = Path.Combine(assemblyDirectory, SelectConfigFileName(assemblyDirectory));
-        JsonObject config = JsonNode.Parse(File.ReadAllText(configFilePath))?.AsObject()
-            ?? throw new ArgumentException("Configuration file is invalid or missing.");
+        var configFilePath = ResolveConfigFilePath();
+
+        JsonObject config;
+        try
+        {
+            config = JsonNode.Parse(File.ReadAllText(configFilePath)) as JsonObject
+                ?? throw InvalidConfiguration(configFilePath, "the root element must be a JSON object");
+        }
+        catch (JsonException ex)
+        {
+            throw InvalidConfiguration(configFilePath, ex.Message, ex);
+        }
 
         ApplyEnvironmentOverrides(config);
 
-        return config.Deserialize<TestSettings>(GetJsonSerializerOptions()) ?? throw new ArgumentException("Configuration file is invalid or missing.");
+        try
+        {
+            return config.Deserialize<TestSettings>(GetJsonSerializerOptions())
+                ?? throw InvalidConfiguration(configFilePath, "the file does not contain a JSON object");
+        }
+        catch (JsonException ex)
+        {
+            throw InvalidConfiguration(configFilePath, ex.Message, ex);
+        }
+    }
+
+    // TEST_CONFIG_FILE overrides the file entirely; a relative value is resolved against the test
+    // output directory, which is where the test project copies the appsettings files.
+    private static string ResolveConfigFilePath()
+    {
+        var configuredPath = Environment.GetEnvironmentVariable(_configFileVariable);
+        var baseDirectory = AppContext.BaseDirectory;
+
+        if (!string.IsNullOrWhiteSpace(configuredPath))
+        {
+            var resolvedPath = Path.GetFullPath(configuredPath, baseDirectory);
+
+            return File.Exists(resolvedPath)
+                ? resolvedPath
+                : throw MissingConfiguration(resolvedPath, $"{_configFileVariable} is set to '{configuredPath}'");
+        }
+
+        var defaultPath = Path.Combine(baseDirectory, SelectConfigFileName(baseDirectory));
+
+        return File.Exists(defaultPath)
+            ? defaultPath
+            : throw MissingConfiguration(defaultPath, null);
     }
 
     // Local runs use appsettings.json; CI runs (CI=true, as set by the CI server) use appsettings.CI.json,
     // which runs the browser headless. Falls back to the local file when the CI file is missing.
-    private static string SelectConfigFileName(string assemblyDirectory)
+    private static string SelectConfigFileName(string baseDirectory)
     {
         var ciEnvironment = Environment.GetEnvironmentVariable("CI");
         var isCiRun = !string.IsNullOrWhiteSpace(ciEnvironment)
             && (ciEnvironment.Equals("true", StringComparison.OrdinalIgnoreCase) || ciEnvironment == "1");
 
-        return isCiRun && File.Exists(Path.Combine(assemblyDirectory, _ciConfigFileName))
+        return isCiRun && File.Exists(Path.Combine(baseDirectory, _ciConfigFileName))
             ? _ciConfigFileName
             : _localConfigFileName;
     }
+
+    private static FileNotFoundException MissingConfiguration(string path, string? reason)
+    {
+        var detail = reason is null ? string.Empty : $" ({reason})";
+
+        return new FileNotFoundException(
+            $"Test configuration file not found: '{path}'{detail}. Add appsettings.json to the test project with " +
+            "CopyToOutputDirectory=PreserveNewest so it is copied to the output directory, or set " +
+            $"{_configFileVariable} to the path of an existing file.",
+            path);
+    }
+
+    private static InvalidOperationException InvalidConfiguration(string path, string reason, Exception? innerException = null)
+        => new($"Test configuration file '{path}' is invalid: {reason}.", innerException);
 
     // Environment variables named TEST_<Setting> (e.g. TEST_Headless=true) take precedence over the config file.
     // Nested settings are addressed either by their leaf name alone (TEST_Headless -> browserOptions.headless)
