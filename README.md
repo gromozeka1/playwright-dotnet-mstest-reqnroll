@@ -31,23 +31,18 @@ with the readme, licence expression, repository link and the three dependencies
 
 ### Working against the consuming suite
 
-Pack into the folder the test repository reads as its local feed, then bump the pinned
-version there:
-
-```sh
-dotnet pack HardPoint.Testing/HardPoint.Testing.csproj -c Release -o ../localfeed
-```
-
-For a faster loop the suite can also build against these sources directly, with no packing:
+Iterate on the framework without releasing: the suite builds against these sources when asked
+for it.
 
 ```sh
 # in ../hardpoint-tests
 dotnet test Tests/Tests.csproj -p:UseLocalFramework=true
 ```
 
-That switch swaps the package reference for a project reference to
+That switch swaps the suite's package reference for a project reference to
 `../playwright-dotnet-mstest-reqnroll/HardPoint.Testing/HardPoint.Testing.csproj`; keep it off
-for CI and for checks that must prove package behaviour.
+for CI and for checks that must prove package behaviour. Otherwise the suite restores the
+published version pinned in its `Directory.Packages.props`, so bump that pin after a release.
 
 ## The package contract
 

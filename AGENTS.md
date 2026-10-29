@@ -37,10 +37,10 @@ dotnet format TestAutomation.slnx --verify-no-changes
 
 # Produce the package and its symbol package
 dotnet pack HardPoint.Testing/HardPoint.Testing.csproj -c Release -o artifacts
-
-# Package into the consuming suite's local feed
-dotnet pack HardPoint.Testing/HardPoint.Testing.csproj -c Release -o ../localfeed
 ```
+
+Framework changes reach the suite without a release: `dotnet test Tests/Tests.csproj
+-p:UseLocalFramework=true` in `../hardpoint-tests` builds against these sources.
 
 There is no end-to-end suite here: `dotnet pack` plus the unit tests are the local
 verification. Any behaviour that needs a browser is proven in the consuming suite.
