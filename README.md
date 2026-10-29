@@ -38,6 +38,17 @@ version there:
 dotnet pack HardPoint.Testing/HardPoint.Testing.csproj -c Release -o ../localfeed
 ```
 
+For a faster loop the suite can also build against these sources directly, with no packing:
+
+```sh
+# in ../hardpoint-tests
+dotnet test Tests/Tests.csproj -p:UseLocalFramework=true
+```
+
+That switch swaps the package reference for a project reference to
+`../playwright-dotnet-mstest-reqnroll/HardPoint.Testing/HardPoint.Testing.csproj`; keep it off
+for CI and for checks that must prove package behaviour.
+
 ## The package contract
 
 `HardPoint.Testing/README.md` is the consumer-facing documentation and is packed alongside
