@@ -1,11 +1,9 @@
-﻿using Framework.Config;
+using Framework.Config;
 using Framework.Constants;
 using Framework.Helpers;
 using Microsoft.Playwright;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Reqnroll;
 
-[assembly: Parallelize(Scope = ExecutionScope.MethodLevel)]
 namespace Framework.Driver;
 #pragma warning disable CA1822 // Mark members as static
 
