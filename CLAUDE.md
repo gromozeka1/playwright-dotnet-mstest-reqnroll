@@ -25,8 +25,8 @@ this repository.
 - `dotnet format TestAutomation.slnx --verify-no-changes` - formatting gate used by CI.
 - `dotnet pack HardPoint.Testing/HardPoint.Testing.csproj -c Release -o artifacts` - package
   plus symbol package.
-- `dotnet pack HardPoint.Testing/HardPoint.Testing.csproj -c Release -o ../localfeed` - the
-  feed the consuming suite restores from until the package is on nuget.org.
+- `dotnet test Tests/Tests.csproj -p:UseLocalFramework=true` in `../hardpoint-tests` - build
+  the suite against these sources without releasing; it restores from nuget.org otherwise.
 
 There is no end-to-end suite here; behaviour that needs a browser is verified in
 hardpoint-tests.
