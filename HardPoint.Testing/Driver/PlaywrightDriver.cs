@@ -1,5 +1,5 @@
-using System.Reflection;
 using HardPoint.Testing.Config;
+using HardPoint.Testing.Helpers;
 using Microsoft.Playwright;
 
 namespace HardPoint.Testing.Driver;
@@ -41,11 +41,9 @@ public class PlaywrightDriver : IDisposable
     // `playwright show-trace <file>.zip` without tracking traces for green runs.
     public async Task StartTracingAsync(string title)
     {
-        var tracesDirectory = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!, "traces");
+        _ = Directory.CreateDirectory(ArtifactDirectory.Traces);
 
-        _ = Directory.CreateDirectory(tracesDirectory);
-
-        _tracePath = Path.Combine(tracesDirectory, $"{MakeSafeFileName(title)}-{Guid.NewGuid().ToString("N")[..8]}.zip");
+        _tracePath = Path.Combine(ArtifactDirectory.Traces, $"{MakeSafeFileName(title)}-{Guid.NewGuid().ToString("N")[..8]}.zip");
 
         await (await BrowserContext).Tracing.StartAsync(new TracingStartOptions
         {
@@ -85,7 +83,9 @@ public class PlaywrightDriver : IDisposable
 
     public async Task<string> TakeScreenshotAsPathAsync(string fileName)
     {
-        var path = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!, $"{fileName}.png");
+        _ = Directory.CreateDirectory(ArtifactDirectory.Screenshots);
+
+        var path = Path.Combine(ArtifactDirectory.Screenshots, $"{fileName}.png");
         _ = await Page.ScreenshotAsync(new PageScreenshotOptions
         {
             FullPage = true,
@@ -120,7 +120,7 @@ public class PlaywrightDriver : IDisposable
 
     private async Task<IBrowserContext> CreateBrowserContext()
     {
-        var harPath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!, $"sut-{Guid.NewGuid():N}.har");
+        var harPath = Path.Combine(ArtifactDirectory.Root, $"sut-{Guid.NewGuid():N}.har");
         return await (await _browser.Value).NewContextAsync(new BrowserNewContextOptions
         {
             RecordHarPath = harPath,

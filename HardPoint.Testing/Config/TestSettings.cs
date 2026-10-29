@@ -23,4 +23,11 @@ public class TestSettings
     /// </summary>
     [JsonPropertyName("enforceScenarioTags")]
     public bool EnforceScenarioTags { get; set; }
+
+    /// <summary>
+    /// Directory for the Extent report, traces, screenshots and HAR files. Empty writes them
+    /// to the test output directory; a relative value is resolved against it.
+    /// </summary>
+    [JsonPropertyName("outputDirectory")]
+    public string OutputDirectory { get; set; } = string.Empty;
 }

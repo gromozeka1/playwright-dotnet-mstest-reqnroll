@@ -69,11 +69,9 @@ public abstract class BaseHook
         //    return;
         //}
 
-        var directory = Path.Combine(AppContext.BaseDirectory, "screenshots");
+        _ = Directory.CreateDirectory(ArtifactDirectory.Screenshots);
 
-        _ = Directory.CreateDirectory(directory);
-
-        var path = Path.Combine(directory, $"{Guid.NewGuid():N}.png");
+        var path = Path.Combine(ArtifactDirectory.Screenshots, $"{Guid.NewGuid():N}.png");
 
         _ = await playwrightDriver.Page.ScreenshotAsync(new PageScreenshotOptions
         {

@@ -38,7 +38,7 @@ public class ExtentReportManager : IDisposable
             _extentReports = new ExtentReports();
             _extentReports.AddSystemInfo("os", Environment.OSVersion.ToString());
             _extentReports.AddSystemInfo("browser", ConfigReader.Settings.BrowserType);
-            _extentReports.AttachReporter(new ExtentSparkReporter("TestReports.html"));
+            _extentReports.AttachReporter(new ExtentSparkReporter(ArtifactDirectory.Report));
         }
 
         return _extentReports;
