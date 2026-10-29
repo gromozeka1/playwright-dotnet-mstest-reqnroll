@@ -11,33 +11,53 @@ namespace Framework.Helpers;
 
 public class ExtentReportManager : IDisposable
 {
+    // The reporter and the per-feature nodes are shared by every scenario of the run,
+    // and scenarios execute in parallel. One process-wide lock guards their creation:
+    // locking on a new object per call (the previous behaviour) excluded nothing, and
+    // creating a feature node per scenario duplicated every feature in the report.
+    private static readonly Lock _reportLock = new();
+    private static readonly Dictionary<string, ExtentTest> _featuresByTitle = new(StringComparer.Ordinal);
     private static ExtentReports? _extentReports;
+
     private ExtentTest? _scenario;
     private bool _disposedValue;
 
     public ExtentReportManager()
     {
-        if (_extentReports is not null)
+        lock (_reportLock)
         {
-            return;
+            _ = GetOrCreateReporter();
+        }
+    }
+
+    // Must be called while holding _reportLock.
+    private static ExtentReports GetOrCreateReporter()
+    {
+        if (_extentReports is null)
+        {
+            _extentReports = new ExtentReports();
+            _extentReports.AddSystemInfo("os", Environment.OSVersion.ToString());
+            _extentReports.AddSystemInfo("browser", ConfigReader.Settings.BrowserType);
+            _extentReports.AttachReporter(new ExtentSparkReporter("TestReports.html"));
         }
 
-        lock (new Lock())
-        {
-            if (_extentReports is null)
-            {
-                _extentReports = new ExtentReports();
-                _extentReports.AddSystemInfo("os", Environment.OSVersion.ToString());
-                _extentReports.AddSystemInfo("browser", ConfigReader.Settings.BrowserType);
-                _extentReports.AttachReporter(new ExtentSparkReporter("TestReports.html"));
-            }
-        }
+        return _extentReports;
     }
 
     public void StartReportScenario(FeatureContext featureContext, ScenarioContext scenarioContext)
     {
-        ExtentTest feature = _extentReports!.CreateTest<Feature>(featureContext.FeatureInfo.Title);
-        _scenario = feature.CreateNode<Scenario>(scenarioContext.ScenarioInfo.Title);
+        lock (_reportLock)
+        {
+            var reporter = GetOrCreateReporter();
+
+            if (!_featuresByTitle.TryGetValue(featureContext.FeatureInfo.Title, out var feature))
+            {
+                feature = reporter.CreateTest<Feature>(featureContext.FeatureInfo.Title);
+                _featuresByTitle[featureContext.FeatureInfo.Title] = feature;
+            }
+
+            _scenario = feature.CreateNode<Scenario>(scenarioContext.ScenarioInfo.Title);
+        }
     }
 
     public async Task ReportStep(PlaywrightDriver playwrightDriver,
@@ -73,22 +93,17 @@ public class ExtentReportManager : IDisposable
         {
             if (disposing)
             {
-                // TODO: dispose managed state (managed objects)
-                _extentReports?.Flush();
+                // Flushing touches the shared report, which other scenarios may still be
+                // appending to, so it happens under the same lock as node creation.
+                lock (_reportLock)
+                {
+                    _extentReports?.Flush();
+                }
             }
 
-            // TODO: free unmanaged resources (unmanaged objects) and override finalizer
-            // TODO: set large fields to null
             _disposedValue = true;
         }
     }
-
-    // // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
-    // ~ExtentReportManager()
-    // {
-    //     // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-    //     Dispose(disposing: false);
-    // }
 
     public void Dispose()
     {
