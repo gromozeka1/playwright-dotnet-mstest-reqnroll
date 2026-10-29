@@ -1,4 +1,4 @@
-﻿namespace Framework.Config;
+namespace Framework.Config;
 
 public enum DriverType
 {

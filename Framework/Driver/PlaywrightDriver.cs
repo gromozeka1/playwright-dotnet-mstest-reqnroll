@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using Framework.Config;
 using Microsoft.Playwright;
 
