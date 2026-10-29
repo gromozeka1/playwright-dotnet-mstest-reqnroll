@@ -6,8 +6,9 @@ applyTo: "**/*.cs,**/*.csproj"
 
 - Target the existing `net10.0` framework unless the task explicitly changes supported runtimes.
 - Central Package Management is enforced via `Directory.Packages.props`. Do not declare package versions in `.csproj` files.
-- Use the project's existing nullable, implicit-using, and formatting conventions (4 spaces, LF endings, file-scoped namespaces). Keep public APIs and dependency injection registrations consistent with neighboring code.
-- In ProductAPI, keep database access on `ProductContext`/EF Core and preserve the `api/products` contract used by WebApp. Handle expected missing resources explicitly; do not hide unexpected failures behind success responses.
-- In WebApp, use the registered typed `ProductApiClient` for ProductAPI calls and pass cancellation tokens through HTTP operations when available. Keep the API base URL configurable via `ProductApi:BaseUrl`.
-- In Framework, provide reusable Playwright .NET and MSTest helpers, configuration parsing, base classes (`BasePage`, `BaseHook`), and Extent reporting.
-- In Tests, implement Reqnroll BDD scenarios, step definitions, page objects, and lifecycle hooks using MSTest. Run tests using `dotnet test Tests/Tests.csproj` against the running SUT.
+- Use the project's existing nullable, implicit-using, and formatting conventions (4 spaces, LF endings, file-scoped namespaces). Keep public APIs consistent with neighboring code.
+- In `HardPoint.Testing`, everything public is consumer-facing: `PlaywrightDriver`, `BasePage`, `BaseHook`, `ConfigReader`/`TestSettings`, `ExtentReportManager`, `ArtifactDirectory`, `ScenarioTags`. A change to a binding signature, a config key or the tag vocabulary needs a version bump and an update to the packed `HardPoint.Testing/README.md`.
+- Keep the package free of application specifics: no page objects, step definitions, feature files, SUT models or `docker-compose` — those belong to the consuming suite at https://github.com/gromozeka1/hardpoint-tests.
+- Never write artifacts next to the executing assembly (`Assembly.Location`); it is the NuGet cache for consumers. Route them through `ArtifactDirectory`.
+- In `HardPoint.Testing.Tests`, cover configuration and artifact-path resolution. These tests mutate cached settings and `TEST_` environment variables, so they must be `[DoNotParallelize]` and restore state in `[TestCleanup]`.
+- Verify with `dotnet build TestAutomation.slnx`, `dotnet test HardPoint.Testing.Tests/HardPoint.Testing.Tests.csproj`, `dotnet format TestAutomation.slnx --verify-no-changes`, and `dotnet pack HardPoint.Testing/HardPoint.Testing.csproj -c Release -o artifacts`.
