@@ -13,5 +13,5 @@ public class ScenarioTags
 
     public static readonly HashSet<string> MandatoryTestTypeTags = new HashSet<string> { UI, API };
 
-    public static readonly HashSet<string> MandatoryEnvTags = new HashSet<string> { Dev, QA, Stage, Prod };
+    public static readonly HashSet<string> MandatoryEnvTags = new HashSet<string> { Local, Dev, QA, Stage, Prod };
 }

@@ -13,20 +13,18 @@ namespace Framework.Driver;
 public abstract class BaseHook
 {
     [BeforeScenario(Order = int.MinValue)]
-    public void VerifyMandatoryScenarioTags(FeatureContext featureContext, ScenarioContext scenarioContext, ExtentReportManager extentReportManager)
+    public void VerifyMandatoryScenarioTags(ScenarioContext scenarioContext)
     {
         var scenarioTags = scenarioContext.ScenarioInfo.CombinedTags;
-        var mandatoryTestTypeTags = new HashSet<string> { ScenarioTags.UI, ScenarioTags.API };
-        var mandatoryEnvTags = new HashSet<string> { ScenarioTags.Local, ScenarioTags.Dev, ScenarioTags.QA, ScenarioTags.Stage, ScenarioTags.Prod };
 
-        if (!mandatoryEnvTags.Any(x => scenarioTags.Contains(x)))
+        if (!ScenarioTags.MandatoryEnvTags.Any(x => scenarioTags.Contains(x)))
         {
-            throw new ArgumentException($"Scenario should contain at least one env tag: {string.Join(", ", mandatoryEnvTags)}");
+            throw new ArgumentException($"Scenario should contain at least one env tag: {string.Join(", ", ScenarioTags.MandatoryEnvTags)}");
         }
 
-        if (!mandatoryTestTypeTags.Any(x => scenarioTags.Contains(x)))
+        if (!ScenarioTags.MandatoryTestTypeTags.Any(x => scenarioTags.Contains(x)))
         {
-            throw new ArgumentException($"Scenario should contain at least one test type tag: {string.Join(", ", mandatoryTestTypeTags)}");
+            throw new ArgumentException($"Scenario should contain at least one test type tag: {string.Join(", ", ScenarioTags.MandatoryTestTypeTags)}");
         }
     }
 
