@@ -106,6 +106,7 @@ Tag enforcement occurs in `BaseHook.VerifyMandatoryScenarioTags` at `Order = int
 - Scenarios must be fully independent and runnable in parallel (`ExecutionScope.MethodLevel` is enabled).
 - **Pre-execution cleanup**: Use a `Background:` step with `Given I ensure "{name}" data is cleaned up if already exists` before creating products.
 - **Post-execution cleanup**: `Hooks.DeleteCreatedProduct` reads the created product from `ScenarioContext` and deletes it via `ProductsApi`.
+- **Unique names**: `Tests/Support/ProductNames` suffixes every product a scenario creates with a per-scenario token, so parallel scenarios and concurrent runs can never share — or delete — each other's data. Steps call `Register(name)` when creating, `Actual(name)` / `ActualIn(message)` when asserting; seed-data names pass through untouched.
 
 ### 6. Assertions
 - For UI tests: Use Playwright web-first assertions (`Microsoft.Playwright.Assertions.Expect(...)`) to benefit from auto-retries and timeouts.

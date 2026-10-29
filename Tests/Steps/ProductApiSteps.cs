@@ -8,7 +8,7 @@ using Tests.Support;
 namespace Tests.Steps;
 
 [Binding]
-public sealed class ProductApiSteps(ScenarioContext scenarioContext, ProductsApi productsApi)
+public sealed class ProductApiSteps(ScenarioContext scenarioContext, ProductNames productNames, ProductsApi productsApi)
 {
     private IAPIResponse _response = null!;
 
@@ -16,6 +16,8 @@ public sealed class ProductApiSteps(ScenarioContext scenarioContext, ProductsApi
     public async Task GivenAProductExists(DataTable table)
     {
         Product product = table.CreateInstance<Product>();
+        product.Name = productNames.Register(product.Name);
+
         await productsApi.DeleteByNameAsync(product.Name);
 
         IAPIResponse response = await productsApi.CreateAsync(product);
@@ -30,6 +32,8 @@ public sealed class ProductApiSteps(ScenarioContext scenarioContext, ProductsApi
     public async Task GivenAnotherProductExists(DataTable table)
     {
         Product product = table.CreateInstance<Product>();
+        product.Name = productNames.Register(product.Name);
+
         await productsApi.DeleteByNameAsync(product.Name);
 
         IAPIResponse response = await productsApi.CreateAsync(product);
@@ -95,6 +99,8 @@ public sealed class ProductApiSteps(ScenarioContext scenarioContext, ProductsApi
     public async Task WhenICreateProductWithFollowingDetailsViaApi(DataTable table)
     {
         Product product = table.CreateInstance<Product>();
+        product.Name = productNames.Register(product.Name);
+
         TrackProductForCleanup(product.Name);
         _response = await productsApi.CreateAsync(product);
     }
@@ -103,7 +109,7 @@ public sealed class ProductApiSteps(ScenarioContext scenarioContext, ProductsApi
     public async Task WhenIUpdateTheSecondProductNameTo(string newName)
     {
         Product second = scenarioContext.Get<Product>("SecondProduct");
-        second.Name = newName;
+        second.Name = productNames.Actual(newName);
         _response = await productsApi.UpdateAsync(second.Id, second);
     }
 
@@ -133,7 +139,7 @@ public sealed class ProductApiSteps(ScenarioContext scenarioContext, ProductsApi
     public async Task ThenTheProductHasNameAndPrice(string name, int price)
     {
         Product product = await ProductsApi.ReadAsync(_response);
-        _ = product.Name.Should().Be(name);
+        _ = product.Name.Should().Be(productNames.Actual(name));
         _ = product.Price.Should().Be(price);
     }
 
@@ -156,7 +162,8 @@ public sealed class ProductApiSteps(ScenarioContext scenarioContext, ProductsApi
     public async Task ThenTheProductListContains(string name)
     {
         List<Product> products = await ProductsApi.ReadListAsync(_response);
-        _ = products.Any(p => p.Name.Contains(name, StringComparison.OrdinalIgnoreCase)).Should().BeTrue();
+        string actual = productNames.Actual(name);
+        _ = products.Any(p => p.Name.Contains(actual, StringComparison.OrdinalIgnoreCase)).Should().BeTrue();
     }
 
     [Then("all products in the response have type {string}")]

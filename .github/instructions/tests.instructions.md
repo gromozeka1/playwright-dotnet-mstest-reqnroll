@@ -16,6 +16,7 @@ applyTo: "Tests/**,Framework/**,**/*.feature"
 - Mark step classes `sealed` and decorate with `[Binding]`.
 - Inject collaborators (`ScenarioContext`, page objects, `ProductsApi`) using C# 12 primary constructors.
 - Store inter-step domain data in `ScenarioContext.Set<T>()` and retrieve it via `ScenarioContext.Get<T>()` or `ScenarioContext.TryGetValue<T>()`. Avoid instance fields in step definition classes.
+- Resolve entity names through `ProductNames`: call `Register(name)` in steps that create a product, and `Actual(name)` / `ActualIn(message)` in steps that assert on one. Feature files keep readable names while data stays unique per scenario.
 
 ## Page Objects (`Tests/Pages/*.cs`)
 - All page objects must inherit from `Framework.Driver.BasePage`.
