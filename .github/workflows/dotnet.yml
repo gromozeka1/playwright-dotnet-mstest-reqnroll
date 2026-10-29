@@ -25,6 +25,17 @@ jobs:
       uses: actions/setup-dotnet@v6
       with:
         global-json-file: global.json
+        cache: true
+        cache-dependency-path: |
+          **/*.csproj
+          Directory.Packages.props
+          global.json
+    - name: Cache Playwright browsers
+      uses: actions/cache@v6
+      with:
+        path: ~/.cache/ms-playwright
+        key: playwright-${{ runner.os }}-${{ hashFiles('Directory.Packages.props') }}
+        restore-keys: playwright-${{ runner.os }}-
     - name: Restore dependencies
       run: dotnet restore TestAutomation.slnx
     - name: Build
