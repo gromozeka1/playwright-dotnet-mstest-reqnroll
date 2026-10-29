@@ -47,33 +47,48 @@ noise (20 confusing failures instead of one clear message).
 of `GET /` and `GET api/products` that aborts with
 "SUT not reachable — run `docker compose up -d`".
 
-### 4. Name-based cleanup is a parallel-execution hazard
-Method-level parallelism is enabled, and isolation relies on
+### 4. Name-based cleanup is a parallel-execution hazard — ✅ done
+Method-level parallelism is enabled, and isolation relied on
 `Given I ensure "{name}" data is cleaned up if already exists` with fixed names
-(`Headphones`, `DuplicateUI`, ...). This works today only because names happen
-to be unique per scenario; two scenarios sharing a name could delete each
-other's data mid-run.
+(`Headphones`, `DuplicateUI`, ...). That only worked while no two scenarios (or
+concurrent runs) shared a name — a shared name would delete the other's data
+mid-run.
 
-**Suggestion:** generate unique names per run/scenario (e.g. append
-`TestContext.TestName` or a guid).
+Implemented as `Tests/Support/ProductNames`: a scenario-scoped registry that
+suffixes every product a scenario creates (`Headphones 24e4f07d`). Creation
+steps call `Register`, steps referring to an existing product call `Actual` (and
+`ActualIn` for the duplicate-name error text), so feature files keep their
+readable names and seed-data names pass through untouched. Cleanup, duplicate-name
+checks and search assertions all use the resolved name, so each scenario only
+ever sees its own rows.
 
 ## 🟡 CI efficiency & observability
 
-### 5. Cache NuGet and Playwright browsers
+### 5. Cache NuGet and Playwright browsers — ✅ done
+
 The workflow reinstalls Chromium with `--with-deps` on every run — the bulk of
 the ~2 minute build job.
 
-**Suggestion:** `actions/setup-dotnet` with `cache: true` for NuGet, plus
-`actions/cache` on the Playwright browser directory
-(`~/AppData/Local/ms-playwright` / `~/.cache/ms-playwright`).
+`actions/setup-dotnet` now runs with `cache: true` (keyed on the project files,
+`Directory.Packages.props` and `global.json`), and `actions/cache@v6` keeps
+`~/.cache/ms-playwright` keyed on `Directory.Packages.props`, so a Playwright
+version bump invalidates the browser cache. `--with-deps` still runs on every
+build: it is a no-op for the browser download on a cache hit but still installs
+the Linux libraries the cached browser needs.
 
-### 6. Upload artifacts that actually debug failures
-CI uploads only `TestReports.html` and `*.png`, but the framework records
-Playwright **traces** (`TestResults/Traces`), **HAR files** (`sut-{guid}.har`)
-and downloads locally.
+### 6. Upload artifacts that actually debug failures — ✅ done
 
-**Suggestion:** add an `if: failure()` upload of traces and HAR files so a
-failing run can be inspected with `playwright show-trace`.
+CI uploaded only `TestReports.html` and `*.png`, while the framework produced
+**HAR files** (`sut-{guid}.har`) and failure screenshots next to the test DLL.
+Traces were configured (`tracesDir` in `appsettings*.json`) but never started,
+so no trace was ever written.
+
+`PlaywrightDriver` now starts a Playwright trace for every UI scenario and
+keeps it only when the scenario fails (`traces/{title}-{id}.zip`, passed traces
+are deleted), and CI gained an `if: failure()` step uploading
+`test-failure-artifacts` with the report, HAR files, traces and screenshots.
+Download the trace and open it with
+`npx playwright show-trace <file>.zip`.
 
 ### 7. Generate and publish the Allure report in CI (or drop Allure)
 The repo wires `Allure.Reqnroll`, `allurerc.json` and even tracks
