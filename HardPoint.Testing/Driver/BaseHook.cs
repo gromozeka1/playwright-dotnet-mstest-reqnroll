@@ -13,6 +13,11 @@ public abstract class BaseHook
     [BeforeScenario(Order = int.MinValue)]
     public void VerifyMandatoryScenarioTags(ScenarioContext scenarioContext)
     {
+        if (!ConfigReader.Settings.EnforceScenarioTags)
+        {
+            return;
+        }
+
         var scenarioTags = scenarioContext.ScenarioInfo.CombinedTags;
 
         if (!ScenarioTags.MandatoryEnvTags.Any(x => scenarioTags.Contains(x)))

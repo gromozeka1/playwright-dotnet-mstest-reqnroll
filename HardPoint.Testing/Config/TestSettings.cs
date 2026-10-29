@@ -16,4 +16,11 @@ public class TestSettings
 
     [JsonPropertyName("apiOptions")]
     public APIRequestNewContextOptions APIRequestNewContextOptions { get; set; } = new();
+
+    /// <summary>
+    /// Rejects scenarios that are missing an environment tag or a test-type tag before they run.
+    /// Off by default so the package does not impose a tagging policy on consumers.
+    /// </summary>
+    [JsonPropertyName("enforceScenarioTags")]
+    public bool EnforceScenarioTags { get; set; }
 }
