@@ -7,6 +7,14 @@ deliverables:
 2. **A test project**, showing how to use that framework — starting with the
    Playwright + MSTest + Reqnroll flavour in this repository.
 
+> **Status (2026-10-29):** Phases 0–3 are executed. The framework builds as the
+> `HardPoint.Testing` package (`HardPoint.Testing/`, namespaces `HardPoint.Testing.*`,
+> `0.1.0-preview.1`), and the suite lives in the separate **hardpoint-tests** repository,
+> consuming that version from a local folder feed. Verified there: 20/20 scenarios pass and
+> Reqnroll discovers `BaseHook` from the package with `"bindingAssemblies": []`. Outstanding:
+> Phase 4 (local `UseLocalFramework` switch) and Phase 5 (framework CI running a real scenario,
+> publishing to nuget.org). The checkboxes below record the state when each phase was worked on.
+
 Status legend: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked
 
 ## 1. Goal and non-goals

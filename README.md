@@ -1,54 +1,58 @@
 ﻿# playwright-dotnet-mstest-reqnroll
 
-Demo repository for a .NET browser and API test automation framework using Playwright and MSTest. The system under test (SUT) is a product-management application: an ASP.NET Core MVC WebApp backed by an ASP.NET Core ProductAPI and SQLite, running from pre-built images on Docker Hub.
+Source of the **HardPoint.Testing** NuGet package: Playwright, MSTest and Reqnroll
+building blocks for a browser and API test suite. The package provides a per-scenario
+driver, JSON configuration with environment overrides, ExtentReports integration, and
+scenario hooks that open the application and capture failure artifacts.
+
+The suite that consumes it lives in the separate
+[hardpoint-tests](https://github.com/gromozeka1/hardpoint-tests) repository, and the
+system under test in [sut-hardpoint](https://github.com/gromozeka1/sut-hardpoint).
 
 ## Repository structure
 
-- `Framework/` contains shared Playwright support, including browser and API request contexts, driver lifecycle, and test settings.
-- `Tests/` contains Reqnroll feature files (`Features/`), step definitions (`Steps/`), hooks including Extent reporting (`Hooks/`), page objects, an API helper, and test configuration. UI scenarios are tagged `@ui`; API scenarios exercise ProductAPI through Playwright's API request context. Extent writes `TestReports.html` to the test output folder.
-- `docker-compose.yml` runs the SUT from its published Docker Hub images (`gromozeka1/hardpoint-webapp`, `gromozeka1/hardpoint-productapi`); the SUT source lives in the separate [gromozeka1/sut-hardpoint](https://github.com/gromozeka1/sut-hardpoint) repository.
-- `TestAutomation.slnx` groups the solution projects.
+| Path | Contents |
+|---|---|
+| `HardPoint.Testing/` | The package: config reader, driver, `BasePage`, `BaseHook`, Extent reporting, artifact paths, scenario tags. `README.md` here is packed into the package. |
+| `HardPoint.Testing.Tests/` | Unit tests for the framework (configuration and artifact-path resolution). |
+| `TestAutomation.slnx` | Both projects, pinned to .NET 10 by `global.json`. |
 
-The solution targets .NET 10. Tests use Reqnroll with MSTest as the runner.
-
-## Build and run tests
-
-Install the .NET 10 SDK, then run these commands from the repository root:
+## Build, test, pack
 
 ```sh
 dotnet build TestAutomation.slnx
-pwsh Tests/bin/Debug/net10.0/playwright.ps1 install
-dotnet test Tests/Tests.csproj
+dotnet test HardPoint.Testing.Tests/HardPoint.Testing.Tests.csproj
+dotnet pack HardPoint.Testing/HardPoint.Testing.csproj -c Release -o artifacts
 ```
 
-The `playwright.ps1` install step downloads the Playwright browsers and requires [PowerShell](https://learn.microsoft.com/powershell/scripting/install/installing-powershell) (`pwsh`). Run it after the first build and again whenever the Playwright package is updated; otherwise UI tests fail with "Looks like Playwright was just installed or updated. Please run the following command to download new browsers". To install only Chromium (the default browser), append `chromium`.
+`dotnet pack` produces `HardPoint.Testing.<version>.nupkg` plus a `.snupkg` symbol package,
+with the readme, licence expression, repository link and the three dependencies
+(`Microsoft.Playwright`, `Reqnroll.MSTest`, `ExtentReports`).
 
-The test endpoints are configured in `Tests/appsettings.json`: `ApplicationUrl` is the WebApp URL and `ApplicationApiUrl` is the ProductAPI base URL used by API tests. Any setting can be overridden with an environment variable named `TEST_<Setting>`, for example `TEST_Headless=true` or `TEST_ApplicationUrl=http://host:5168` (nested settings are addressed by their leaf name or by a `__`-separated path of C# property names, and array settings such as `Args` take comma-separated values). Start the SUT before running tests. The defaults are `http://localhost:5168` for WebApp and `http://localhost:5044` for ProductAPI.
+### Working against the consuming suite
 
-Two config files are used: `Tests/appsettings.json` for local runs (headed browser, `slowMo` 500) and `Tests/appsettings.CI.json` for CI/CD (headless browser, no `slowMo`). The reader picks the CI file automatically when the `CI` environment variable is `true` (GitHub Actions sets this), and falls back to the local file otherwise.
-
-## Run the SUT with Docker Compose
-
-Prerequisites: Docker Desktop or Docker Engine with Docker Compose v2, with the Docker daemon running. Run these commands from the repository root; ensure ports `5044` and `5168` are available.
-
-Pull and start both services from their published Docker Hub images (no build step — the images are built by the SUT repository's CI):
+Pack into the folder the test repository reads as its local feed, then bump the pinned
+version there:
 
 ```sh
-docker compose up -d
+dotnet pack HardPoint.Testing/HardPoint.Testing.csproj -c Release -o ../localfeed
 ```
 
-The images default to the pinned release `1.0.0`; override with the `SUT_TAG` variable (e.g. `SUT_TAG=latest docker compose up -d` or a `SUT_TAG=latest` line in a `.env` file) to test another release, a `sha-<shortsha>` build, or `latest`.
+## The package contract
 
-Docker pulls the images automatically if they are missing locally.
+`HardPoint.Testing/README.md` is the consumer-facing documentation and is packed alongside
+the assembly: configuration keys (`browserType`, `applicationUrl`, `enforceScenarioTags`,
+`outputDirectory`, `browserOptions`, `apiOptions`), the `TEST_` environment-override rules,
+and the two things a consumer must do itself — declare `[assembly: Parallelize]` and, only if
+Reqnroll fails to discover it, list the assembly in `bindingAssemblies`. Binding discovery
+from the package has been verified against the suite, so no extra configuration is needed
+today.
 
-The WebApp is available at `http://localhost:5168` and ProductAPI at `http://localhost:5044`. Inside the Compose network, WebApp connects to ProductAPI at `http://productapi:8080/`; the host URLs above are for accessing the services and tests from outside the containers.
+Versions are prereleases (`0.1.0-preview.1`) until the consumer migration proves the API.
+Any change to a binding signature, the config shape or the tag vocabulary is at least a
+minor bump.
 
-The test settings in `Tests/appsettings.json` point the browser to `http://localhost:5168` (`ApplicationUrl`) and API requests to `http://localhost:5044/api/` (`ApplicationApiUrl`). Keep the Compose stack running while running tests with these settings.
+## Commit guidelines
 
-Stop the services with:
-
-```sh
-docker compose down
-```
-
-ProductAPI data is stored in the `productapi-data` Docker volume and is preserved when the services are stopped this way.
+- Imperative, concise commit messages.
+- Do not commit `bin/`, `obj/`, `*.nupkg`, `*.snupkg` or generated reports.
