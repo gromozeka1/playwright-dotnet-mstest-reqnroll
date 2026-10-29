@@ -5,12 +5,28 @@
     <LangVersion>latest</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+
+    <PackageId>HardPoint.Testing</PackageId>
+    <Version>0.1.0-preview.1</Version>
+    <Authors>Andrei</Authors>
+    <Description>Playwright, MSTest and Reqnroll test framework: browser and API driver lifecycle, JSON test configuration, ExtentReports integration and scenario hooks.</Description>
+    <PackageTags>playwright;mstest;reqnroll;bdd;ui-testing;api-testing;extentreports</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/gromozeka1/playwright-dotnet-mstest-reqnroll</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="ExtentReports" />
     <PackageReference Include="Microsoft.Playwright" />
     <PackageReference Include="Reqnroll.MSTest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>
