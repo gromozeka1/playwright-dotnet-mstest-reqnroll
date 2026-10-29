@@ -33,8 +33,9 @@ public abstract class BaseHook
     }
 
     [BeforeScenario(ScenarioTags.UI, Order = 20)]
-    public async Task OpenApplication(PlaywrightDriver playwrightDriver)
+    public async Task OpenApplication(PlaywrightDriver playwrightDriver, ScenarioContext scenarioContext)
     {
+        await playwrightDriver.StartTracingAsync(scenarioContext.ScenarioInfo.Title);
         await playwrightDriver.Page.GotoAsync(ConfigReader.Settings.ApplicationUrl);
     }
 
@@ -42,6 +43,17 @@ public abstract class BaseHook
     public async Task ReportStep(PlaywrightDriver playwrightDriver, FeatureContext featureContext, ScenarioContext scenarioContext, ExtentReportManager extentReportManager)
     {
         await extentReportManager.ReportStep(playwrightDriver, featureContext, scenarioContext);
+    }
+
+    [AfterScenario(ScenarioTags.UI)]
+    public async Task SaveTraceOnFailure(ScenarioContext scenarioContext, PlaywrightDriver playwrightDriver, IReqnrollOutputHelper output)
+    {
+        string? tracePath = await playwrightDriver.StopTracingAsync(scenarioContext.TestError is not null);
+
+        if (tracePath is not null)
+        {
+            output.AddAttachment(tracePath);
+        }
     }
 
     [AfterScenario(ScenarioTags.UI)]

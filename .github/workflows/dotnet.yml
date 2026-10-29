@@ -50,6 +50,17 @@ jobs:
           ${{ env.OUTPUT_DIR }}/TestReports.html
           ${{ env.OUTPUT_DIR }}/*.png
         if-no-files-found: ignore
+    - name: Upload failure diagnostics
+      if: failure()
+      uses: actions/upload-artifact@v7
+      with:
+        name: test-failure-artifacts
+        path: |
+          ${{ env.OUTPUT_DIR }}/TestReports.html
+          ${{ env.OUTPUT_DIR }}/*.har
+          ${{ env.OUTPUT_DIR }}/traces/**
+          ${{ env.OUTPUT_DIR }}/screenshots/**
+        if-no-files-found: ignore
     - name: Stop application
       if: always()
       run: docker compose down

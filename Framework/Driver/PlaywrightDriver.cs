@@ -6,12 +6,17 @@ namespace Framework.Driver;
 
 public class PlaywrightDriver : IDisposable
 {
+    // Characters that are invalid in a file name on Windows, plus spaces and the
+    // separators that would break a path on either platform: traces are produced on
+    // Linux CI and then downloaded, so both platforms must accept the name.
+    private static readonly char[] _unsafeFileNameChars = ['<', '>', ':', '"', '/', '\\', '|', '?', '*', ' '];
     private readonly Lazy<Task<IPlaywright>> _playwright;
     private readonly Lazy<Task<IBrowser>> _browser;
     private readonly Lazy<Task<IBrowserContext>> _browserContext;
     private readonly Lazy<Task<IPage>> _page;
     private readonly Lazy<Task<IAPIRequestContext>> _apiRequestContext;
     private readonly TestSettings _testSettings = ConfigReader.Settings;
+    private string? _tracePath;
     private bool _disposedValue;
 
     public PlaywrightDriver()
@@ -30,6 +35,53 @@ public class PlaywrightDriver : IDisposable
     public IPage Page => _page.Value.Result;
 
     public Task<IAPIRequestContext> ApiRequestContext => _apiRequestContext.Value;
+
+    // Traces are captured for every UI scenario but only kept (exported to *.zip)
+    // when the scenario fails, so a failing CI run can be opened with
+    // `playwright show-trace <file>.zip` without tracking traces for green runs.
+    public async Task StartTracingAsync(string title)
+    {
+        var tracesDirectory = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!, "traces");
+
+        _ = Directory.CreateDirectory(tracesDirectory);
+
+        _tracePath = Path.Combine(tracesDirectory, $"{MakeSafeFileName(title)}-{Guid.NewGuid().ToString("N")[..8]}.zip");
+
+        await (await BrowserContext).Tracing.StartAsync(new TracingStartOptions
+        {
+            Screenshots = true,
+            Snapshots = true,
+            Title = title
+        });
+    }
+
+    public async Task<string?> StopTracingAsync(bool keepTrace)
+    {
+        if (_tracePath is null)
+        {
+            return null;
+        }
+
+        var tracePath = _tracePath;
+        _tracePath = null;
+
+        await (await BrowserContext).Tracing.StopAsync(new TracingStopOptions { Path = tracePath });
+
+        if (!keepTrace)
+        {
+            File.Delete(tracePath);
+            return null;
+        }
+
+        return tracePath;
+    }
+
+    private static string MakeSafeFileName(string name)
+    {
+        var safeName = new string([.. name.Select(c => _unsafeFileNameChars.Contains(c) ? '-' : c)]);
+
+        return safeName.Length > 80 ? safeName[..80] : safeName;
+    }
 
     public async Task<string> TakeScreenshotAsPathAsync(string fileName)
     {

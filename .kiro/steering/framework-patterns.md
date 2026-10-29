@@ -79,11 +79,15 @@ Two reporting mechanisms run in parallel:
 - **ExtentReports** (HTML) — driven by `AfterStep` hooks in `BaseHook`. Output: `TestReports.html` next to the test DLL.
 - **Allure** — driven automatically by `Allure.Reqnroll`. Config in `Tests/allureConfig.json`. Output: `allure-results/` at repo root level.
 
-Both are configured; do not remove either. The CI workflow uploads `TestReports.html` and `*.png` screenshots as artifacts.
+Both are configured; do not remove either. The CI workflow uploads `TestReports.html` and `*.png` screenshots on every run, and on failure additionally uploads the report, HAR files, traces and screenshots as `test-failure-artifacts`.
+
+## Trace capture in the test run
+
+`BaseHook` starts a Playwright trace for every `@ui` scenario (`StartTracingAsync` in `PlaywrightDriver`, DOM snapshots and screenshots enabled) and stops it in an `AfterScenario` hook. Passing scenarios discard their trace; failing scenarios keep it as `traces/{scenario-title}-{id}.zip` next to the test DLL, where CI picks it up. Open one with `npx playwright show-trace <file>.zip` or `dotnet playwright show-trace`.
+
+`TestSettings.BrowserTypeLaunchOptions.TracesDir` (`TestResults/Traces` in `appsettings*.json`) only tells Playwright where to stage trace chunks; the exported `.zip` paths above are what the framework and CI use.
 
 ## Tracing with playwright-cli
-
-`TestSettings.BrowserTypeLaunchOptions.TracesDir` is set to `TestResults/Traces` in `appsettings.json`. This directory is where Playwright writes trace files when tracing is enabled by the framework.
 
 For ad-hoc tracing outside of the automated test run — for example, to capture a detailed network and DOM trace while reproducing a bug manually — use `playwright-cli`:
 
