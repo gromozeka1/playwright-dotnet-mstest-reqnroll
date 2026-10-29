@@ -1,3 +1,4 @@
+using System.Globalization;
 using Framework.Driver;
 using Microsoft.Playwright;
 using Tests.Models;
@@ -22,9 +23,9 @@ public class ProductPage(PlaywrightDriver playwrightDriver) : BasePage(playwrigh
 
         await TxtName.FillAsync(product.Name);
         await TxtDescription.FillAsync(product.Description);
-        await TxtPrice.FillAsync(product.Price.ToString());
-        await TxtStock.FillAsync(product.Stock.ToString());
-        _ = await SelectProduct.SelectOptionAsync(((int)product.ProductType).ToString());
+        await TxtPrice.FillAsync(product.Price.ToString(CultureInfo.InvariantCulture));
+        await TxtStock.FillAsync(product.Stock.ToString(CultureInfo.InvariantCulture));
+        _ = await SelectProduct.SelectOptionAsync(((int)product.ProductType).ToString(CultureInfo.InvariantCulture));
     }
 
     public async Task ClickCreate() => await ClickButtonAsync("Create product");
