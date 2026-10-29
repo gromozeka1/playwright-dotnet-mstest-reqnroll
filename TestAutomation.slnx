@@ -1,5 +1,4 @@
 ﻿<Solution>
   <Project Path="HardPoint.Testing/HardPoint.Testing.csproj" />
   <Project Path="HardPoint.Testing.Tests/HardPoint.Testing.Tests.csproj" />
-  <Project Path="Tests/Tests.csproj" Id="b5c41b7f-a6f4-49d6-9d4b-0d93a72c837b" />
 </Solution>
