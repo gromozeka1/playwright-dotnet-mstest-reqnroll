@@ -1,10 +1,10 @@
-using Framework.Config;
-using Framework.Constants;
-using Framework.Helpers;
+using HardPoint.Testing.Config;
+using HardPoint.Testing.Constants;
+using HardPoint.Testing.Helpers;
 using Microsoft.Playwright;
 using Reqnroll;
 
-namespace Framework.Driver;
+namespace HardPoint.Testing.Driver;
 #pragma warning disable CA1822 // Mark members as static
 
 [Binding]

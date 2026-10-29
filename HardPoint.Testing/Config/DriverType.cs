@@ -1,4 +1,4 @@
-namespace Framework.Config;
+namespace HardPoint.Testing.Config;
 
 public enum DriverType
 {

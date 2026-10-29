@@ -1,6 +1,6 @@
 using Microsoft.Playwright;
 
-namespace Framework.Driver;
+namespace HardPoint.Testing.Driver;
 
 public abstract class BasePage(PlaywrightDriver playwrightDriver)
 {

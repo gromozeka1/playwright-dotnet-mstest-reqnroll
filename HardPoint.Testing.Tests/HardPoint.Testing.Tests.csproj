@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Framework\Framework.csproj" />
+    <ProjectReference Include="..\HardPoint.Testing\HardPoint.Testing.csproj" />
   </ItemGroup>
 
 </Project>

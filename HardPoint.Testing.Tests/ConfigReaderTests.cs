@@ -1,7 +1,7 @@
-using Framework.Config;
+using HardPoint.Testing.Config;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Framework.Tests;
+namespace HardPoint.Testing.Tests;
 
 // ConfigReader caches the settings and reads process-wide environment variables, so these
 // tests must not run in parallel with each other.

@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
 using Microsoft.Playwright;
 
-namespace Framework.Config;
+namespace HardPoint.Testing.Config;
 
 public class TestSettings
 {

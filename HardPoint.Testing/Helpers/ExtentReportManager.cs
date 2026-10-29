@@ -3,11 +3,11 @@ using AventStack.ExtentReports.Gherkin;
 using AventStack.ExtentReports.Gherkin.Model;
 using AventStack.ExtentReports.Model;
 using AventStack.ExtentReports.Reporter;
-using Framework.Config;
-using Framework.Driver;
+using HardPoint.Testing.Config;
+using HardPoint.Testing.Driver;
 using Reqnroll;
 
-namespace Framework.Helpers;
+namespace HardPoint.Testing.Helpers;
 
 public class ExtentReportManager : IDisposable
 {

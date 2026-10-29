@@ -1,8 +1,8 @@
 using System.Reflection;
-using Framework.Config;
+using HardPoint.Testing.Config;
 using Microsoft.Playwright;
 
-namespace Framework.Driver;
+namespace HardPoint.Testing.Driver;
 
 public class PlaywrightDriver : IDisposable
 {

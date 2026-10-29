@@ -1,4 +1,4 @@
-using Framework.Config;
+using HardPoint.Testing.Config;
 using Reqnroll;
 
 namespace Tests.Support;

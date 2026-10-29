@@ -1,4 +1,4 @@
-namespace Framework.Constants;
+namespace HardPoint.Testing.Constants;
 
 public class ScenarioTags
 {
