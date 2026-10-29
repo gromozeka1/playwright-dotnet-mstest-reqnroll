@@ -63,6 +63,34 @@ Versions are prereleases (`0.1.0-preview.1`) until the consumer migration proves
 Any change to a binding signature, the config shape or the tag vocabulary is at least a
 minor bump.
 
+## Publishing
+
+Pushing a `v*` tag runs `.github/workflows/publish.yml`, which builds, tests, packs and pushes
+the package and its symbols to nuget.org. Publishing uses Trusted Publishing: the workflow
+exchanges a GitHub OIDC token for a short-lived API key, so the only stored secret is
+`NUGET_USER` (the nuget.org profile name).
+
+The nuget.org policy must name this repository and the workflow **file name only**:
+
+| Field | Value |
+|---|---|
+| Repository Owner | `gromozeka1` |
+| Repository | `playwright-dotnet-mstest-reqnroll` |
+| Workflow File | `publish.yml` |
+| Scopes | `HardPoint.*` |
+
+```sh
+git tag v0.1.0-preview.1
+git push origin v0.1.0-preview.1
+```
+
+The workflow refuses to publish when the tag does not match the `<Version>` in
+`HardPoint.Testing.csproj`. A published version can only be unlisted, never deleted, so bump
+the version before tagging again.
+
+`workflow_dispatch` runs the same job without the tag check, and it does publish — use it
+only for a deliberate manual release.
+
 ## Commit guidelines
 
 - Imperative, concise commit messages.
