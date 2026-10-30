@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+
+    <!-- This project exercises the packed package, not the project, so HardPoint.Testing has to
+         come from a feed. CI packs with SMOKE_PACKAGE_VERSION and restores that same version;
+         0.0.0-smoke is the local default and can never exist on nuget.org, so what is tested is
+         always the .nupkg built from this checkout. -->
+    <HardPointSmokeVersion Condition="'$(HardPointSmokeVersion)' == '' and '$(SMOKE_PACKAGE_VERSION)' != ''">$(SMOKE_PACKAGE_VERSION)</HardPointSmokeVersion>
+    <HardPointSmokeVersion Condition="'$(HardPointSmokeVersion)' == ''">0.0.0-smoke</HardPointSmokeVersion>
+
+    <!-- The folder `dotnet pack -o artifacts-smoke` writes to. NuGet fails the whole restore when a
+         configured folder source is missing, so pack before restoring this project. -->
+    <RestoreAdditionalProjectSources>$(RestoreAdditionalProjectSources);$(MSBuildThisFileDirectory)../artifacts-smoke</RestoreAdditionalProjectSources>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Only the test host is declared. Microsoft.Playwright, Reqnroll.MSTest and ExtentReports
+         must arrive through HardPoint.Testing: if the package stops declaring them, this project
+         stops compiling or the scenario stops running. -->
+    <PackageReference Include="HardPoint.Testing" VersionOverride="$(HardPointSmokeVersion)" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="MSTest" />
+    <!-- Turns the .feature file into tests. A consumer picks its test runner explicitly, and NuGet
+         imports the `build` folder of a package only for a direct reference, so a dependency of
+         HardPoint.Testing cannot generate these tests for a consumer. -->
+    <PackageReference Include="Reqnroll.MSTest" />
+    <PackageReference Include="Reqnroll.Tools.MsBuild.Generation" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="appsettings.CI.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="reqnroll.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="SmokePage.html" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

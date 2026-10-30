@@ -13,7 +13,13 @@ env:
   OUTPUT_DIR: artifacts
 
 jobs:
+  # A published version can be unlisted but never deleted, so the packed package has to work before
+  # anything is pushed: this runs the same browser scenario the pull-request build runs.
+  smoke:
+    uses: ./.github/workflows/smoke.yml
+
   publish:
+    needs: smoke
 
     runs-on: ubuntu-latest
     timeout-minutes: 15

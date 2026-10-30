@@ -15,6 +15,8 @@ this repository.
   reporting (`ExtentReportManager`), artifact paths (`ArtifactDirectory`), tag vocabulary
   (`ScenarioTags`). Namespaces are `HardPoint.Testing.*`.
 - `HardPoint.Testing.Tests/`: unit tests for configuration and artifact-path resolution.
+- `HardPoint.Testing.SmokeTests/`: one Playwright scenario run against the packed package restored
+  from `artifacts-smoke/`. Not in `TestAutomation.slnx`, because it needs the feed.
 
 ---
 
@@ -27,9 +29,9 @@ this repository.
   plus symbol package.
 - `dotnet test Tests/Tests.csproj -p:UseLocalFramework=true` in `../hardpoint-tests` - build
   the suite against these sources without releasing; it restores from nuget.org otherwise.
-
-There is no end-to-end suite here; behaviour that needs a browser is verified in
-hardpoint-tests.
+- `dotnet pack HardPoint.Testing/HardPoint.Testing.csproj -c Release -p:Version=0.0.0-smoke -o artifacts-smoke`
+  then `dotnet test HardPoint.Testing.SmokeTests/HardPoint.Testing.SmokeTests.csproj -c Release` -
+  the browser-level check of the packed package. CI runs it on every push and before publishing.
 
 ---
 

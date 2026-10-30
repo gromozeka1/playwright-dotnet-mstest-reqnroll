@@ -1,0 +1,86 @@
+name: Package smoke test
+
+# Packs HardPoint.Testing, restores that .nupkg into HardPoint.Testing.SmokeTests and runs a real
+# Playwright scenario against a local page. The unit tests only cover the classes in isolation, so
+# this is the job that catches a package which is broken once packed: missed dependencies, missing
+# content, a driver that cannot launch, hooks that never run, a report that never gets written.
+#
+# Called by dotnet.yml for every push and pull request, and by publish.yml before anything is pushed
+# to nuget.org, because a published version can be unlisted but never deleted.
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+env:
+  CONFIGURATION: Release
+  # Local-only version: it cannot collide with anything published, so the restore below can only
+  # resolve the package built in this run.
+  SMOKE_PACKAGE_VERSION: 0.0.0-smoke
+  SMOKE_FEED: artifacts-smoke
+
+jobs:
+  package-smoke:
+
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+    - uses: actions/checkout@v7
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v6
+      with:
+        global-json-file: global.json
+        cache: true
+        cache-dependency-path: |
+          **/*.csproj
+          Directory.Packages.props
+          global.json
+    - name: Pack the framework
+      run: >
+        dotnet pack HardPoint.Testing/HardPoint.Testing.csproj
+        -c "$CONFIGURATION"
+        -p:Version="$SMOKE_PACKAGE_VERSION"
+        -o "$SMOKE_FEED"
+    - name: Check the package is in the feed
+      run: test -f "$SMOKE_FEED/HardPoint.Testing.$SMOKE_PACKAGE_VERSION.nupkg"
+    - name: Restore the smoke project from that package
+      run: dotnet restore HardPoint.Testing.SmokeTests/HardPoint.Testing.SmokeTests.csproj
+    - name: Build the smoke project
+      run: >
+        dotnet build HardPoint.Testing.SmokeTests/HardPoint.Testing.SmokeTests.csproj
+        --no-restore -c "$CONFIGURATION"
+    - name: Install Chromium
+      # Installed through the script the build copied to the smoke project's output, which only
+      # exists because the package brings Microsoft.Playwright to a consumer.
+      run: pwsh "HardPoint.Testing.SmokeTests/bin/$CONFIGURATION/net10.0/playwright.ps1" install --with-deps chromium
+    - name: Run the scenario
+      shell: bash
+      run: |
+        set -o pipefail
+        dotnet test HardPoint.Testing.SmokeTests/HardPoint.Testing.SmokeTests.csproj \
+          --no-build -c "$CONFIGURATION" \
+          --logger "console;verbosity=normal" | tee smoke-test.log
+        # A run that discovers nothing also exits 0, and the scenario is the only guard against a
+        # package whose Reqnroll integration no longer produces tests, so require it to have run.
+        grep -Eq 'Total tests:[[:space:]]+1' smoke-test.log
+        grep -Eq '^[[:space:]]*Passed:[[:space:]]+1' smoke-test.log
+    - name: Check the run wrote a report
+      shell: bash
+      run: |
+        report="HardPoint.Testing.SmokeTests/bin/$CONFIGURATION/net10.0/TestReports.html"
+        test -s "$report"
+        grep -q "A page opens and a control updates the DOM" "$report"
+    - name: Upload failure artifacts
+      if: failure()
+      uses: actions/upload-artifact@v7
+      with:
+        name: smoke-failure
+        path: |
+          smoke-test.log
+          HardPoint.Testing.SmokeTests/bin/Release/net10.0/TestReports.html
+          HardPoint.Testing.SmokeTests/bin/Release/net10.0/screenshots/**
+          HardPoint.Testing.SmokeTests/bin/Release/net10.0/traces/**
+        if-no-files-found: ignore
