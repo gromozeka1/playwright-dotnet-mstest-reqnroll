@@ -3,16 +3,23 @@
 ## Solution Architecture & Module Organization
 
 This repository builds the **HardPoint.Testing** NuGet package: a .NET 10 solution
-(`TestAutomation.slnx`) pinned by `global.json`, with two projects.
+(`TestAutomation.slnx`) pinned by `global.json`, with two projects in the solution and a third
+that is built on its own.
 
 | Project | Type | Description |
 |---|---|---|
 | `HardPoint.Testing/` | Class Library (packable) | The package: `PlaywrightDriver`, `BasePage`, `BaseHook`, `ConfigReader`/`TestSettings`, `ExtentReportManager`, `ArtifactDirectory`, `ScenarioTags`. Namespaces are `HardPoint.Testing.*`. |
 | `HardPoint.Testing.Tests/` | MSTest | Unit tests for configuration reading and artifact-path resolution. |
+| `HardPoint.Testing.SmokeTests/` | MSTest + Reqnroll, not in `TestAutomation.slnx` | One Playwright scenario run against the packed package restored from `artifacts-smoke/`. |
 
 ### Dependency Flow & Isolation
 
 - `HardPoint.Testing.Tests` references `HardPoint.Testing`.
+- `HardPoint.Testing.SmokeTests` references the **package**, not the project, so it must be
+  restored after `dotnet pack -o artifacts-smoke`. It declares only the test host
+  (`Microsoft.NET.Test.Sdk`, `MSTest`, `Reqnroll.MSTest`, `Reqnroll.Tools.MsBuild.Generation`);
+  `Microsoft.Playwright` and `ExtentReports` have to arrive through `HardPoint.Testing` — that is
+  the point of the project.
 - The package depends on `Microsoft.Playwright`, `Reqnroll.MSTest` and `ExtentReports`;
   those are its public dependency surface.
 - The test suite and the SUT are **not** in this repository. They live in
@@ -42,8 +49,17 @@ dotnet pack HardPoint.Testing/HardPoint.Testing.csproj -c Release -o artifacts
 Framework changes reach the suite without a release: `dotnet test Tests/Tests.csproj
 -p:UseLocalFramework=true` in `../hardpoint-tests` builds against these sources.
 
-There is no end-to-end suite here: `dotnet pack` plus the unit tests are the local
-verification. Any behaviour that needs a browser is proven in the consuming suite.
+The browser-level check is the smoke project, and it is not in the solution because it needs the
+feed:
+
+```sh
+dotnet pack HardPoint.Testing/HardPoint.Testing.csproj -c Release -p:Version=0.0.0-smoke -o artifacts-smoke
+dotnet test HardPoint.Testing.SmokeTests/HardPoint.Testing.SmokeTests.csproj -c Release
+```
+
+CI runs it in `.github/workflows/smoke.yml` on every push and pull request, and again before
+`publish.yml` pushes anything to nuget.org. Keep it covering the package surface, not the suite's
+scenarios: the full behavioural suite still lives in `../hardpoint-tests`.
 
 ---
 
@@ -107,4 +123,5 @@ the version in its `Directory.Packages.props`.
 ## Commit Guidelines
 
 - Use imperative, concise commit messages.
-- Do not commit `bin/`, `obj/`, `*.nupkg`, `*.snupkg`, `artifacts/`, or generated reports.
+- Do not commit `bin/`, `obj/`, `*.nupkg`, `*.snupkg`, `artifacts/`, `artifacts-smoke/`, or
+  generated reports.

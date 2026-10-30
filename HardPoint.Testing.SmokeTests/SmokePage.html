@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>HardPoint.Testing smoke page</title>
+</head>
+<body>
+  <main>
+    <h1>HardPoint.Testing smoke page</h1>
+
+    <form id="smoke-form">
+      <label for="note">Note</label>
+      <input id="note" name="note" type="text" />
+      <button type="submit">Submit</button>
+    </form>
+
+    <p id="result" role="status">0 submissions</p>
+  </main>
+
+  <script>
+    let submissions = 0;
+
+    document.getElementById('smoke-form').addEventListener('submit', (event) => {
+      event.preventDefault();
+      submissions += 1;
+      document.getElementById('result').textContent =
+        submissions === 1 ? '1 submission' : `${submissions} submissions`;
+    });
+  </script>
+</body>
+</html>

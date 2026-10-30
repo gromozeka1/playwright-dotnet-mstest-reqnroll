@@ -48,3 +48,8 @@ jobs:
           ${{ env.OUTPUT_DIR }}/*.nupkg
           ${{ env.OUTPUT_DIR }}/*.snupkg
         if-no-files-found: error
+
+  # Runs in parallel with build: it packs its own copy of the package and drives a real browser
+  # against it, so a package that only breaks once packed fails here.
+  smoke:
+    uses: ./.github/workflows/smoke.yml

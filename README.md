@@ -15,7 +15,8 @@ system under test in [sut-hardpoint](https://github.com/gromozeka1/sut-hardpoint
 |---|---|
 | `HardPoint.Testing/` | The package: config reader, driver, `BasePage`, `BaseHook`, Extent reporting, artifact paths, scenario tags. `README.md` here is packed into the package. |
 | `HardPoint.Testing.Tests/` | Unit tests for the framework (configuration and artifact-path resolution). |
-| `TestAutomation.slnx` | Both projects, pinned to .NET 10 by `global.json`. |
+| `HardPoint.Testing.SmokeTests/` | One real Playwright scenario that runs against the packed package. Outside the solution: it restores `HardPoint.Testing` from `artifacts-smoke/`, so a plain `dotnet build` never needs that feed. |
+| `TestAutomation.slnx` | The package and its unit tests, pinned to .NET 10 by `global.json`. |
 
 ## Build, test, pack
 
@@ -28,6 +29,23 @@ dotnet pack HardPoint.Testing/HardPoint.Testing.csproj -c Release -o artifacts
 `dotnet pack` produces `HardPoint.Testing.<version>.nupkg` plus a `.snupkg` symbol package,
 with the readme, licence expression, repository link and the three dependencies
 (`Microsoft.Playwright`, `Reqnroll.MSTest`, `ExtentReports`).
+
+### Package smoke test
+
+`HardPoint.Testing.SmokeTests/` consumes the package from `artifacts-smoke/` instead of referencing
+the project, then runs a browser scenario against a local page. It is the only check that covers
+the `.nupkg` itself: a dependency missing from the package, a driver that cannot launch, hooks that
+never run or a report that is never written all fail here and nowhere else.
+
+```sh
+dotnet pack HardPoint.Testing/HardPoint.Testing.csproj -c Release -p:Version=0.0.0-smoke -o artifacts-smoke
+dotnet test HardPoint.Testing.SmokeTests/HardPoint.Testing.SmokeTests.csproj -c Release
+```
+
+`0.0.0-smoke` is a local-only version, so the restore can only resolve the package that was just
+packed. `CI=true` selects `appsettings.CI.json` and runs headless, exactly as it does in a consumer;
+a local run is headed. Pack first: NuGet fails a restore outright when a configured folder source
+does not exist.
 
 ### Working against the consuming suite
 
@@ -61,7 +79,9 @@ minor bump.
 ## Publishing
 
 Pushing a `v*` tag runs `.github/workflows/publish.yml`, which builds, tests, packs and pushes
-the package and its symbols to nuget.org. Publishing uses Trusted Publishing: the workflow
+the package and its symbols to nuget.org. The package smoke test runs first and publishing waits on
+it: a version can be unlisted but never deleted, so a broken package must not reach nuget.org.
+`dotnet.yml` runs the same smoke job on every push and pull request. Publishing uses Trusted Publishing: the workflow
 exchanges a GitHub OIDC token for a short-lived API key, so the only stored secret is
 `NUGET_USER` (the nuget.org profile name).
 
