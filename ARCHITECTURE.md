@@ -24,7 +24,7 @@ documentation, not notes.
 | Project | Type | Notes |
 |---|---|---|
 | `HardPoint.Testing/` | Packable class library (`net10.0`) | The package itself — 9 source files |
-| `HardPoint.Testing.Tests/` | MSTest | 26 unit tests: configuration reading (including `browserType` validation), artifact-path resolution and the browser-context options the driver builds |
+| `HardPoint.Testing.Tests/` | MSTest | 31 unit tests: configuration reading (including `browserType` validation), artifact-path resolution, the browser-context options the driver builds and the parallelism warning |
 | `HardPoint.Testing.SmokeTests/` | MSTest + Reqnroll | One real browser scenario against the **packed** package — **outside `TestAutomation.slnx`**, because it needs the `artifacts-smoke/` feed |
 
 Solution `TestAutomation.slnx`; .NET 10 pinned by `global.json`. Dependencies:
@@ -52,6 +52,7 @@ of the smoke project).
 Reqnroll DI resolves PlaywrightDriver (one per scenario)
   │
   ├─ BeforeScenario  Order = int.MinValue  VerifyMandatoryScenarioTags   (if enforceScenarioTags)
+  ├─ BeforeScenario  Order = int.MinValue + 1  WarnWhenParallelismIsNotConfigured  (once, if no attribute)
   ├─ BeforeScenario  Order = 10            StartReportScenario           (always)
   ├─ BeforeScenario  Order = 20            OpenApplication               (@ui only → applicationUrl)
   │                                         + tracing started            (@ui only)
@@ -78,6 +79,7 @@ copy both with `CopyToOutputDirectory=PreserveNewest`.
   "browserType": "chromium",
   "applicationUrl": "http://localhost:5168",
   "enforceScenarioTags": false,
+  "warnOnSerialExecution": true,
   "outputDirectory": "",
   "browserOptions": { "headless": true },
   "apiOptions": { "BaseURL": "http://localhost:5044/api/", "IgnoreHTTPSErrors": true },
@@ -90,6 +92,7 @@ copy both with `CopyToOutputDirectory=PreserveNewest`.
 | `browserType` | `chromium`, `firefox`, `webkit` — **required**, validated at read time; case-insensitive, stored canonically |
 | `applicationUrl` | Opened before each `@ui` scenario — **required** |
 | `enforceScenarioTags` | Reject a scenario missing a test-type tag or environment tag before it runs. Default **`false`**: the package imposes no tagging policy unless asked |
+| `warnOnSerialExecution` | Warn once when the test assembly declares no `[assembly: Parallelize]` — the suite would otherwise run serially and still pass. Default **`true`**; `false` for a deliberately serial suite |
 | `outputDirectory` | Root for report/traces/screenshots/HAR. Empty = test output directory; relative resolves against it |
 | `browserOptions` | Passed to `IBrowserType.LaunchAsync` |
 | `apiOptions` | Passed to `APIRequest.NewContextAsync` |
@@ -109,12 +112,14 @@ Override rules — these are **external API**, unit-tested:
 
 ## 5. What the package cannot do for a consumer
 
-Both are silent-failure traps, and both are documented in the packed README because of that:
+Both are assembly-level traps, and both are documented in the packed README because of that:
 
 1. **Parallelism.** Assembly-level attributes configure the assembly that declares them, so
    `[assembly: Parallelize(Scope = ExecutionScope.MethodLevel)]` must be declared in the *consumer's*
    test project. Declared here, it would configure this package and consumer suites would keep
-   passing while running serially.
+   passing while running serially. `BaseHook` cannot fix that, but it can see the concrete hook's
+   assembly and writes a one-time warning when the attribute is absent (the attribute is matched by
+   name, so the package keeps no compile-time MSTest reference).
 2. **Binding discovery.** `BaseHook` carries `[Binding]` and Reqnroll discovers it from the package
    reference with `"bindingAssemblies": []` (verified with Reqnroll 3.3.4). Only if a future Reqnroll
    stops scanning package assemblies does the consumer add `{ "bindingAssemblies": ["HardPoint.Testing"] }`.
@@ -172,7 +177,7 @@ The smoke project must keep covering the *package surface*, not grow into a seco
   [CHANGELOG.md](CHANGELOG.md).
 - **Any** change to a binding signature, the configuration shape or the tag vocabulary is **at least
   a minor bump**. Patches otherwise.
-- Versions stay prerelease until a consumer proves the API. Current: `0.1.0-preview.4`.
+- Versions stay prerelease until a consumer proves the API. Current: `0.1.0-preview.5`.
 - When a config key, tag or binding changes, update `HardPoint.Testing/README.md` in the same change
   — it ships inside the package.
 

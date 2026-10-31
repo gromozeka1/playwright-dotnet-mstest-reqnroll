@@ -5,6 +5,16 @@ All notable changes to `HardPoint.Testing` are recorded here. The format follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Any change to a binding
 signature, the configuration shape or the tag vocabulary is at least a minor bump.
 
+## [0.1.0-preview.5] - 2026-11-01
+
+### Added
+
+- `BaseHook` writes a one-time warning when the consuming test assembly declares no
+  `[assembly: Parallelize]` attribute, so a suite that silently runs serially is visible instead
+  of merely slower. The attribute is read from metadata by name, keeping the package free of a
+  compile-time MSTest reference, and `warnOnSerialExecution` (default `true`) turns the warning
+  off for deliberately serial suites.
+
 ## [0.1.0-preview.4] - 2026-11-01
 
 ### Fixed

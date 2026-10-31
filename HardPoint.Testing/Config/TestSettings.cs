@@ -31,6 +31,14 @@ public class TestSettings
     public bool EnforceScenarioTags { get; set; }
 
     /// <summary>
+    /// Writes a one-time warning when the consuming test assembly declares no
+    /// <c>[assembly: Parallelize]</c> attribute, so a suite that silently runs serially is
+    /// noticed. On by default; set it to <see langword="false"/> for deliberately serial suites.
+    /// </summary>
+    [JsonPropertyName("warnOnSerialExecution")]
+    public bool WarnOnSerialExecution { get; set; } = true;
+
+    /// <summary>
     /// Directory for the Extent report, traces, screenshots and HAR files. Empty writes them
     /// to the test output directory; a relative value is resolved against it.
     /// </summary>
