@@ -45,7 +45,7 @@ Copy both with `CopyToOutputDirectory=PreserveNewest`.
 
 | Key | Meaning |
 |---|---|
-| `browserType` | `chromium`, `firefox` or `webkit`. Required. |
+| `browserType` | `chromium`, `firefox` or `webkit`. Required, and validated when the file is read: any other value fails with the resolved path and the accepted values. Matching is case-insensitive; the canonical spelling is stored. |
 | `applicationUrl` | URL opened before each `@ui` scenario. Required. |
 | `enforceScenarioTags` | Reject a scenario that has no test-type tag (`@ui`/`@api`) or no environment tag, before it runs. Default `false`, so the package imposes no tagging policy unless you ask for it. |
 | `outputDirectory` | Directory for `TestReports.html`, `traces/`, `screenshots/` and `sut-*.har`. Empty means the test output directory; a relative path resolves against it. |

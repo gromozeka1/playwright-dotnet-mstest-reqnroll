@@ -5,6 +5,16 @@ All notable changes to `HardPoint.Testing` are recorded here. The format follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Any change to a binding
 signature, the configuration shape or the tag vocabulary is at least a minor bump.
 
+## [0.1.0-preview.4] - 2026-11-01
+
+### Fixed
+
+- A mistyped `browserType` now fails when the configuration is read, not mid-scenario when the
+  browser launches — after `BeforeScenario` had already opened the report node. The error names
+  the resolved file, the `browserType` key and the accepted values (`chromium`, `firefox`,
+  `webkit`). Matching is case-insensitive and the canonical spelling is stored, so the driver
+  never sees an unknown value.
+
 ## [0.1.0-preview.3] - 2026-10-31
 
 ### Changed
