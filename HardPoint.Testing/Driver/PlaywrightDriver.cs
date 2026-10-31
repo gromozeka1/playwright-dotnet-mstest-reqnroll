@@ -4,7 +4,7 @@ using Microsoft.Playwright;
 
 namespace HardPoint.Testing.Driver;
 
-public class PlaywrightDriver : IDisposable
+public class PlaywrightDriver : IDisposable, IAsyncDisposable
 {
     // Characters that are invalid in a file name on Windows, plus spaces and the
     // separators that would break a path on either platform: traces are produced on
@@ -32,7 +32,16 @@ public class PlaywrightDriver : IDisposable
 
     public Task<IBrowserContext> BrowserContext => _browserContext.Value;
 
-    public IPage Page => _page.Value.Result;
+    /// <summary>
+    /// The scenario's page, started on first access. Page objects expose synchronous locators, so
+    /// this stays synchronous — but it is a bridge: waiters get the original exception rather than
+    /// an <see cref="AggregateException"/>, and async code should await <see cref="GetPageAsync"/>
+    /// so the browser launch is awaited instead of blocked on.
+    /// </summary>
+    public IPage Page => _page.Value.GetAwaiter().GetResult();
+
+    /// <summary>Starts the browser (when it is not running yet) and returns the scenario's page.</summary>
+    public Task<IPage> GetPageAsync() => _page.Value;
 
     public Task<IAPIRequestContext> ApiRequestContext => _apiRequestContext.Value;
 
@@ -86,7 +95,8 @@ public class PlaywrightDriver : IDisposable
         _ = Directory.CreateDirectory(ArtifactDirectory.Screenshots);
 
         var path = Path.Combine(ArtifactDirectory.Screenshots, $"{fileName}.png");
-        _ = await Page.ScreenshotAsync(new PageScreenshotOptions
+        IPage page = await GetPageAsync();
+        _ = await page.ScreenshotAsync(new PageScreenshotOptions
         {
             FullPage = true,
             Type = ScreenshotType.Png,
@@ -128,51 +138,77 @@ public class PlaywrightDriver : IDisposable
         });
     }
 
-    protected virtual void Dispose(bool disposing)
+    /// <summary>
+    /// Closes the page, context, browser, API context and the Playwright driver, in that order.
+    /// Awaiting each step replaces the old <c>Task.Run(...).Wait()</c> with two fixed 500 ms delays
+    /// that guessed when the previous step had finished.
+    /// </summary>
+    /// <remarks>
+    /// Teardown runs after the scenario has already reported its result, and a browser that is slow
+    /// or already gone must not turn a passing scenario into a failure — so every step is
+    /// best-effort and the first failure does not skip the rest of the cleanup.
+    /// </remarks>
+    public async ValueTask DisposeAsync()
     {
         if (_disposedValue)
         {
             return;
         }
 
-        if (disposing)
-        {
-            // dispose managed state (managed objects)
-            if (_browser.IsValueCreated)
-            {
-                Task.Run(async () =>
-                {
-                    await Page.CloseAsync();
-                    await Task.Delay(TimeSpan.FromMilliseconds(500));
-                    await (await BrowserContext).CloseAsync();
-                    await Task.Delay(TimeSpan.FromMilliseconds(500));
-                    await (await Browser).CloseAsync();
-                    await (await Browser).DisposeAsync();
-                }).Wait();
-            }
+        _disposedValue = true;
 
-            if (_apiRequestContext.IsValueCreated)
-            {
-                _ = Task.Run(async () => await (await ApiRequestContext).DisposeAsync());
-            }
+        if (_page.IsValueCreated)
+        {
+            await IgnoreAsync(async () => await (await _page.Value).CloseAsync());
         }
 
-        // free unmanaged resources (unmanaged objects) and override finalizer
-        // set large fields to null
-        _disposedValue = true;
+        if (_browserContext.IsValueCreated)
+        {
+            await IgnoreAsync(async () => await (await _browserContext.Value).CloseAsync());
+        }
+
+        if (_browser.IsValueCreated)
+        {
+            await IgnoreAsync(async () =>
+            {
+                IBrowser browser = await _browser.Value;
+                await browser.CloseAsync();
+                await browser.DisposeAsync();
+            });
+        }
+
+        if (_apiRequestContext.IsValueCreated)
+        {
+            await IgnoreAsync(async () => await (await _apiRequestContext.Value).DisposeAsync());
+        }
+
+        if (_playwright.IsValueCreated)
+        {
+            await IgnoreAsync(async () => (await _playwright.Value).Dispose());
+        }
+
+        GC.SuppressFinalize(this);
     }
 
-    // override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
-    // ~PlaywrightDriver()
-    // {
-    //     // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-    //     Dispose(disposing: false);
-    // }
+    private static async Task IgnoreAsync(Func<Task> teardown)
+    {
+        try
+        {
+            await teardown();
+        }
+        catch (Exception)
+        {
+            // Best effort, see the remarks on DisposeAsync.
+        }
+    }
 
+    /// <summary>
+    /// Synchronous teardown for callers that cannot await (the Reqnroll hook is async, framework
+    /// consumers usually are not). It blocks this thread on <see cref="DisposeAsync"/> rather than
+    /// scheduling the work on another one.
+    /// </summary>
     public void Dispose()
     {
-        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-        Dispose(disposing: true);
-        GC.SuppressFinalize(this);
+        DisposeAsync().AsTask().GetAwaiter().GetResult();
     }
 }

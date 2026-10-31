@@ -7,6 +7,23 @@ signature, the configuration shape or the tag vocabulary is at least a minor bum
 
 ## [Unreleased]
 
+### Changed
+
+- `BaseHook` attaches a screenshot only when a `@ui` scenario fails, which is what the hook name
+  and the README always said: the guard was commented out, so every scenario was captured.
+- `PlaywrightDriver` teardown is asynchronous. `DisposeAsync` closes the page, browser context,
+  browser, API request context and the Playwright driver in that order, replacing
+  `Task.Run(...).Wait()` and the two fixed 500 ms delays; `Dispose()` stays for synchronous
+  callers and blocks on the same sequence.
+- `PlaywrightDriver.Page` no longer throws `AggregateException` when the browser cannot start.
+  The new `GetPageAsync()` is the awaitable accessor, and the framework itself now awaits it.
+
+### Removed
+
+- `PlaywrightDriver.Dispose(bool)` — disposal goes through `DisposeAsync()` (preferred) or
+  `Dispose()`.
+- `Config.DriverType` — an unused enum; the browser is chosen by the `browserType` setting.
+
 ## [0.1.0-preview.1] - 2026-10-30
 
 The first published prerelease. It was extracted from the single-solution repository the suite
