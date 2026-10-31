@@ -225,12 +225,9 @@ was tracked during the Allure experiment; Allure has since been removed from the
 the history file, `allureConfig.json` and `allurerc.json`, leaving ExtentReports as the single
 report.
 
-### 5.7 Pre-existing framework bugs made public — ✅ resolved (driver items documented)
+### 5.7 Pre-existing framework bugs made public — ✅ resolved
 
-Fixed: the `ExtentReportManager` static lock and the duplicate feature nodes per scenario.
-Deferred and recorded in `CHANGELOG.md` under *Known limitations*:
-`PlaywrightDriver.Dispose` blocking on `Task.Run(...).Wait()`, `Page => _page.Value.Result`, and
-`BaseHook` screenshotting every `@ui` scenario because the failure-only guard is commented out.
+Fixed: the `ExtentReportManager` static lock and duplicate feature nodes, asynchronous driver teardown, the synchronous page bridge, and unconditional screenshots for successful `@ui` scenarios. The synchronous `Dispose()` method remains as an adapter for `IDisposable` callers; the hook uses `DisposeAsync()`. These post-release changes are recorded under `[Unreleased]` in `CHANGELOG.md`.
 
 ## 6. Risks
 
@@ -274,11 +271,12 @@ migration work. The framework items raised by the split are now closed:
   `Page` unwraps launch failures instead of throwing `AggregateException`.
 - ✅ The suite's `test.runsettings` — commented-out boilerplate that CI never applied — is
   deleted, along with the property and copy item that referenced it.
+- ✅ Page access is fully asynchronous: `PlaywrightDriver.Page` was removed, page objects await
+  `GetPageAsync()`, and the smoke project and suite consumer use async locator helpers.
+  Breaking API changes are acceptable for this demonstration package.
 
 Still open, deliberately:
 
-- `PlaywrightDriver.Page` remains a synchronous bridge over the lazy page, because page objects
-  expose synchronous locators. Async code uses `GetPageAsync()`; a fully async page API would be
-  a breaking change for consumers.
-- The suite's backlog: flakiness detection first, then contract, data-driven and accessibility
-  coverage — see `hardpoint-tests/SUGGESTIONS.md`.
+- The suite's coverage backlog: contract/schema, data-driven API and accessibility coverage — see
+  `hardpoint-tests/SUGGESTIONS.md`. Flakiness detection is skipped by decision; revisit it if
+  flakes recur in CI.
