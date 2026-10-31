@@ -72,7 +72,7 @@ Reqnroll fails to discover it, list the assembly in `bindingAssemblies`. Binding
 from the package has been verified against the suite, so no extra configuration is needed
 today.
 
-Versions are prereleases (`0.1.0-preview.1`) until the consumer migration proves the API.
+Versions remain prereleases until the consumer migration proves the API.
 Any change to a binding signature, the config shape or the tag vocabulary is at least a
 minor bump.
 

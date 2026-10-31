@@ -5,7 +5,7 @@ All notable changes to `HardPoint.Testing` are recorded here. The format follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Any change to a binding
 signature, the configuration shape or the tag vocabulary is at least a minor bump.
 
-## [Unreleased]
+## [0.1.0-preview.2] - 2026-10-31
 
 ### Changed
 
@@ -15,14 +15,15 @@ signature, the configuration shape or the tag vocabulary is at least a minor bum
   browser, API request context and the Playwright driver in that order, replacing
   `Task.Run(...).Wait()` and the two fixed 500 ms delays; `Dispose()` stays for synchronous
   callers and blocks on the same sequence.
-- `PlaywrightDriver.Page` no longer throws `AggregateException` when the browser cannot start.
-  The new `GetPageAsync()` is the awaitable accessor, and the framework itself now awaits it.
+- Page access is asynchronous end to end: removed the synchronous `PlaywrightDriver.Page` bridge,
+  made `BasePage` locator helpers asynchronous, and migrated the smoke project and suite consumer.
 
 ### Removed
 
 - `PlaywrightDriver.Dispose(bool)` — disposal goes through `DisposeAsync()` (preferred) or
   `Dispose()`.
 - `Config.DriverType` — an unused enum; the browser is chosen by the `browserType` setting.
+- `PlaywrightDriver.Page` and synchronous `BasePage` locator helpers.
 
 ## [0.1.0-preview.1] - 2026-10-30
 
@@ -68,7 +69,7 @@ from nuget.org to prove the API before 1.0.0.
   advisory (GHSA-rxg9-xrhp-64gj). Pin `System.Drawing.Common` to a supported version in the
   consumer's central package management.
 
-### Known limitations
+### Known limitations at release
 
 - `PlaywrightDriver.Dispose` blocks on `Task.Run(...).Wait()`, and `PlaywrightDriver.Page` is
   `_page.Value.Result`, so the first page access blocks the calling thread.

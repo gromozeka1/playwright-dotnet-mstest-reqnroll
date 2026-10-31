@@ -18,9 +18,9 @@ Target framework is `net10.0`.
 
 | Type | Purpose |
 |---|---|
-| `PlaywrightDriver` | One instance per scenario, resolved by Reqnroll's DI container. Exposes `Page`, `Browser`, `BrowserContext`, `ApiRequestContext`, tracing and screenshots. |
+| `PlaywrightDriver` | One instance per scenario, resolved by Reqnroll's DI container. Exposes asynchronous `GetPageAsync()`, `Browser`, `BrowserContext`, `ApiRequestContext`, tracing and screenshots. |
 | `BaseHook` | `[Binding]` that validates scenario tags, starts the Extent report node, opens the application for `@ui` scenarios, records failure traces and screenshots, and disposes the report and driver after the run. Derive from it in your own hooks class. |
-| `BasePage` | Base class for page objects with ARIA-role locators. |
+| `BasePage` | Base class for page objects with asynchronous ARIA-role locator and click helpers. |
 | `ConfigReader` | Reads `TestSettings` from JSON, with `TEST_`-prefixed environment overrides. |
 | `ScenarioTags` | The `@ui` / `@api` test-type tags and the `@local` / `@dev` / `@qa` / `@stage` / `@prod` environment tags. |
 | `ArtifactDirectory` | Resolves where the report, traces, screenshots and HAR files are written. |

@@ -32,14 +32,6 @@ public class PlaywrightDriver : IDisposable, IAsyncDisposable
 
     public Task<IBrowserContext> BrowserContext => _browserContext.Value;
 
-    /// <summary>
-    /// The scenario's page, started on first access. Page objects expose synchronous locators, so
-    /// this stays synchronous — but it is a bridge: waiters get the original exception rather than
-    /// an <see cref="AggregateException"/>, and async code should await <see cref="GetPageAsync"/>
-    /// so the browser launch is awaited instead of blocked on.
-    /// </summary>
-    public IPage Page => _page.Value.GetAwaiter().GetResult();
-
     /// <summary>Starts the browser (when it is not running yet) and returns the scenario's page.</summary>
     public Task<IPage> GetPageAsync() => _page.Value;
 

@@ -12,7 +12,7 @@ public sealed class SmokeSteps(SmokePage smokePage, PlaywrightDriver playwrightD
     // Reaching the heading at all means BaseHook.OpenApplication navigated the driver that
     // Reqnroll resolved from the package before the scenario started.
     [Given("the smoke page is open")]
-    public async Task GivenTheSmokePageIsOpen() => await Assertions.Expect(smokePage.Heading).ToBeVisibleAsync();
+    public async Task GivenTheSmokePageIsOpen() => await Assertions.Expect(await smokePage.HeadingAsync()).ToBeVisibleAsync();
 
     [When("I type {string} into the note field")]
     public async Task WhenITypeIntoTheNoteField(string note) => await smokePage.TypeNoteAsync(note);
@@ -21,7 +21,7 @@ public sealed class SmokeSteps(SmokePage smokePage, PlaywrightDriver playwrightD
     public async Task WhenISubmitTheSmokeForm() => await smokePage.SubmitAsync();
 
     [Then("the page reports {string}")]
-    public async Task ThenThePageReports(string text) => await Assertions.Expect(smokePage.Result).ToHaveTextAsync(text);
+    public async Task ThenThePageReports(string text) => await Assertions.Expect(await smokePage.ResultAsync()).ToHaveTextAsync(text);
 
     [Then("the driver saves a screenshot")]
     public async Task ThenTheDriverSavesAScreenshot()
