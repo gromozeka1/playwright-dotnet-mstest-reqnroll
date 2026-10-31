@@ -44,7 +44,7 @@ site while `**/*` writes them all. The remaining sources were re-checked for SUT
 none — the only URLs left are the ones the consumer configures (`applicationUrl`,
 `apiOptions.BaseURL`).
 
-### 2. `browserType` is validated only when the browser launches
+### 2. `browserType` is validated only when the browser launches — ✅ done
 The switch validates the setting at the point of first use:
 
 ```csharp
@@ -62,6 +62,12 @@ values.
 **Suggestion:** validate in `ConfigReader.ReadConfig` right after deserialisation and throw the same
 actionable shape the missing-file case already uses — resolved path, key, accepted values. The
 documented contract says `chromium`, `firefox` or `webkit`; enforce it where it is read.
+
+**Done in 0.1.0-preview.4.** `ReadConfig` validates after deserialisation, so `ConfigReader.Settings`
+itself throws with the resolved path and `'browserType' must be one of 'chromium', 'firefox',
+'webkit', but was 'chrome'`. Matching is case-insensitive and the canonical spelling is stored, so
+the driver's switch only ever sees a valid value. Tests cover all three documented engines, the
+mixed-case spelling and the rejected value, all without launching a browser.
 
 ### 3. The parallelism obligation fails silently — it can be detected instead
 The package's biggest trap is documented in the README: `[assembly: Parallelize]` must live in the
@@ -249,8 +255,8 @@ minimum: package reference, `appsettings.json`, one hooks class, one page object
 
 ## Suggested order of attack
 
-1. **Items 2–3** — the remaining silent failures: the late `browserType` check and the undetected
-   serial run. They are small, and each currently costs a consumer a debugging session.
+1. **Item 3** — the last silent failure: the undetected serial run. It is small, and it currently
+   costs a consumer a debugging session.
 2. **Item 6** (browser-context options) — unlocks authentication, the most likely next requirement.
 3. **Items 4, 5, 15** — packaging hygiene: API-compat baseline, SourceLink, XML docs. Do them together
    before `1.0.0`, when the baseline is cheapest to establish.

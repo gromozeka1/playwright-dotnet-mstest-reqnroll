@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
+using Microsoft.Playwright;
 
 namespace HardPoint.Testing.Config;
 
@@ -13,6 +14,13 @@ public static class ConfigReader
     private const string _localConfigFileName = "appsettings.json";
     private const string _ciConfigFileName = "appsettings.CI.json";
     private static readonly string[] _pathSeparator = ["__"];
+
+    // The documented contract. Validated when the file is read, so a typo fails at startup with
+    // the resolved path and the accepted values instead of mid-scenario, after the report node is
+    // open, when the browser is launched. Values are matched case-insensitively and stored in the
+    // canonical spelling the driver's switch expects.
+    private static readonly string[] _supportedBrowserTypes =
+        [BrowserType.Chromium, BrowserType.Firefox, BrowserType.Webkit];
 
     // Lazy rather than a field initialiser: a missing or malformed config file then surfaces
     // as the exception raised below, instead of a TypeInitializationException that hides it.
@@ -47,15 +55,38 @@ public static class ConfigReader
 
         ApplyEnvironmentOverrides(config);
 
+        TestSettings settings;
         try
         {
-            return config.Deserialize<TestSettings>(GetJsonSerializerOptions())
+            settings = config.Deserialize<TestSettings>(GetJsonSerializerOptions())
                 ?? throw InvalidConfiguration(configFilePath, "the file does not contain a JSON object");
         }
         catch (JsonException ex)
         {
             throw InvalidConfiguration(configFilePath, ex.Message, ex);
         }
+
+        ValidateBrowserType(settings, configFilePath);
+
+        return settings;
+    }
+
+    private static void ValidateBrowserType(TestSettings settings, string configFilePath)
+    {
+        var canonical = _supportedBrowserTypes.FirstOrDefault(supported =>
+            string.Equals(supported, settings.BrowserType, StringComparison.OrdinalIgnoreCase));
+
+        if (canonical is null)
+        {
+            var actual = settings.BrowserType is null ? "null" : $"'{settings.BrowserType}'";
+            var accepted = string.Join(", ", _supportedBrowserTypes.Select(supported => $"'{supported}'"));
+
+            throw InvalidConfiguration(
+                configFilePath,
+                $"'browserType' must be one of {accepted}, but was {actual}");
+        }
+
+        settings.BrowserType = canonical;
     }
 
     // TEST_CONFIG_FILE overrides the file entirely; a relative value is resolved against the test

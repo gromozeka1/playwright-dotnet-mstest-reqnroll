@@ -24,7 +24,7 @@ documentation, not notes.
 | Project | Type | Notes |
 |---|---|---|
 | `HardPoint.Testing/` | Packable class library (`net10.0`) | The package itself — 9 source files |
-| `HardPoint.Testing.Tests/` | MSTest | 21 unit tests: configuration reading, artifact-path resolution and the browser-context options the driver builds |
+| `HardPoint.Testing.Tests/` | MSTest | 26 unit tests: configuration reading (including `browserType` validation), artifact-path resolution and the browser-context options the driver builds |
 | `HardPoint.Testing.SmokeTests/` | MSTest + Reqnroll | One real browser scenario against the **packed** package — **outside `TestAutomation.slnx`**, because it needs the `artifacts-smoke/` feed |
 
 Solution `TestAutomation.slnx`; .NET 10 pinned by `global.json`. Dependencies:
@@ -87,7 +87,7 @@ copy both with `CopyToOutputDirectory=PreserveNewest`.
 
 | Key | Meaning |
 |---|---|
-| `browserType` | `chromium`, `firefox`, `webkit` — **required** |
+| `browserType` | `chromium`, `firefox`, `webkit` — **required**, validated at read time; case-insensitive, stored canonically |
 | `applicationUrl` | Opened before each `@ui` scenario — **required** |
 | `enforceScenarioTags` | Reject a scenario missing a test-type tag or environment tag before it runs. Default **`false`**: the package imposes no tagging policy unless asked |
 | `outputDirectory` | Root for report/traces/screenshots/HAR. Empty = test output directory; relative resolves against it |
@@ -172,7 +172,7 @@ The smoke project must keep covering the *package surface*, not grow into a seco
   [CHANGELOG.md](CHANGELOG.md).
 - **Any** change to a binding signature, the configuration shape or the tag vocabulary is **at least
   a minor bump**. Patches otherwise.
-- Versions stay prerelease until a consumer proves the API. Current: `0.1.0-preview.3`.
+- Versions stay prerelease until a consumer proves the API. Current: `0.1.0-preview.4`.
 - When a config key, tag or binding changes, update `HardPoint.Testing/README.md` in the same change
   — it ships inside the package.
 

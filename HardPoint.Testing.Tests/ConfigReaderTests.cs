@@ -206,11 +206,47 @@ public sealed class ConfigReaderTests
         StringAssert.Contains(exception.Message, "is invalid");
     }
 
-    private void ConfigureTempConfigFile(string fileName = "config.json", string? content = null)
+    [TestMethod]
+    [DataRow("chromium")]
+    [DataRow("firefox")]
+    [DataRow("webkit")]
+    public void DocumentedBrowserTypesAreAccepted(string browserType)
+    {
+        ConfigureTempConfigFile("browser-type.json", CreateConfig(browserType: browserType));
+
+        Assert.AreEqual(browserType, ConfigReader.Settings.BrowserType);
+    }
+
+    [TestMethod]
+    public void BrowserTypeIsMatchedCaseInsensitivelyAndStoredInCanonicalSpelling()
+    {
+        ConfigureTempConfigFile("browser-type.json", CreateConfig(browserType: "Chromium"));
+
+        Assert.AreEqual("chromium", ConfigReader.Settings.BrowserType);
+    }
+
+    [TestMethod]
+    public void UnknownBrowserTypeFailsWhenTheFileIsReadWithPathKeyAndAcceptedValues()
+    {
+        var configPath = ConfigureTempConfigFile("browser-type.json", CreateConfig(browserType: "chrome"));
+
+        // Reading the configuration is enough: no browser launch, and no scenario, is needed to
+        // catch the typo.
+        var exception = Assert.ThrowsExactly<InvalidOperationException>(() => _ = ConfigReader.Settings);
+
+        StringAssert.Contains(exception.Message, configPath);
+        StringAssert.Contains(exception.Message, "'browserType'");
+        StringAssert.Contains(exception.Message, "'chromium', 'firefox', 'webkit'");
+        StringAssert.Contains(exception.Message, "but was 'chrome'");
+    }
+
+    private string ConfigureTempConfigFile(string fileName = "config.json", string? content = null)
     {
         var configPath = Path.Combine(_tempDirectory, fileName);
         File.WriteAllText(configPath, content ?? CreateConfig());
         Environment.SetEnvironmentVariable(_configFileVariable, configPath);
+
+        return configPath;
     }
 
     private static string CreateHarConfig(bool recordHar = true, string urlFilter = "**/*") => $$"""
@@ -224,9 +260,9 @@ public sealed class ConfigReaderTests
         }
         """;
 
-    private static string CreateConfig(string applicationUrl = "http://localhost:5168") => $$"""
+    private static string CreateConfig(string applicationUrl = "http://localhost:5168", string browserType = "chromium") => $$"""
         {
-          "browserType": "chromium",
+          "browserType": "{{browserType}}",
           "applicationUrl": "{{applicationUrl}}",
           "browserOptions": {
             "args": null,

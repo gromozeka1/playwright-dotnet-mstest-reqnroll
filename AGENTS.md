@@ -87,7 +87,9 @@ These are public API; changing them affects every consumer:
   in the test output directory; `TEST_`-prefixed overrides only change keys the file already
   contains; `TEST_CONFIG_FILE` replaces the file. A missing or malformed file must fail with
   a message naming the path and the remedy.
-- **Settings.** `browserType` and `applicationUrl` are required; `enforceScenarioTags`
+- **Settings.** `browserType` and `applicationUrl` are required; `browserType` is validated when
+  the file is read (`chromium`, `firefox` or `webkit`, case-insensitive, stored canonically) so a
+  typo never reaches the driver mid-scenario; `enforceScenarioTags`
   defaults to `false` so the package imposes no tagging policy; `outputDirectory` routes the
   report, traces, screenshots and HAR files (empty means the test output directory);
   `harOptions.recordHar` (default `true`) turns HAR recording off and `harOptions.urlFilter`
