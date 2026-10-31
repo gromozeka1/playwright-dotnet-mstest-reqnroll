@@ -5,6 +5,18 @@ All notable changes to `HardPoint.Testing` are recorded here. The format follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Any change to a binding
 signature, the configuration shape or the tag vocabulary is at least a minor bump.
 
+## [0.1.0-preview.6] - 2026-11-01
+
+### Added
+
+- `browserContextOptions` is passed to `IBrowser.NewContextAsync`, so a consumer can set storage
+  state, extra HTTP headers, viewport, locale, time zone, permissions, base URL and the rest of
+  Playwright's context surface — previously the context was built internally with the HAR path and
+  nothing else, leaving storage-state authentication unreachable without reflection. Each context
+  gets a copy, so parallel scenarios cannot share the mutable HAR path, and the framework still
+  owns the HAR path and filter (`harOptions`); with `harOptions.recordHar: false` a HAR configured
+  in `browserContextOptions` is left alone.
+
 ## [0.1.0-preview.5] - 2026-11-01
 
 ### Added

@@ -94,6 +94,8 @@ These are public API; changing them affects every consumer:
   (default `true`) writes a one-time warning when the test assembly declares no
   `[assembly: Parallelize]`; `outputDirectory` routes the
   report, traces, screenshots and HAR files (empty means the test output directory);
+  `browserContextOptions` is passed to `IBrowser.NewContextAsync` (storage state, headers,
+  viewport, locale, time zone, permissions, base URL…), copied per context;
   `harOptions.recordHar` (default `true`) turns HAR recording off and `harOptions.urlFilter`
   (default `**/*`) selects the recorded requests — the package carries no suite-specific URL.
 - **Parallelism belongs to the consumer.** `[assembly: Parallelize]` must be declared in the

@@ -124,28 +124,31 @@ public class PlaywrightDriver : IDisposable, IAsyncDisposable
         => await (await _browser.Value).NewContextAsync(CreateBrowserContextOptions());
 
     /// <summary>
-    /// Builds the context options the package owns: a HAR archive routed to the artifact
-    /// directory unless <see cref="HarOptions.RecordHar"/> turns recording off, filtered by
-    /// <see cref="HarOptions.UrlFilter"/> rather than by any URL pattern from one test suite.
+    /// Builds the context options for one scenario: the consumer's
+    /// <see cref="TestSettings.BrowserContextOptions"/> are passed through, and the framework then
+    /// owns the HAR settings, routing the archive to the artifact directory unless
+    /// <see cref="HarOptions.RecordHar"/> turns recording off.
     /// </summary>
     internal BrowserNewContextOptions CreateBrowserContextOptions()
     {
-        HarOptions harOptions = _testSettings.HarOptions;
-        var options = new BrowserNewContextOptions();
+        // Copied per context: every scenario shares one settings instance, and the HAR path below
+        // is per context, so writing it into the shared object would race between parallel runs.
+        var options = new BrowserNewContextOptions(_testSettings.BrowserContextOptions);
 
+        HarOptions harOptions = _testSettings.HarOptions;
         if (!harOptions.RecordHar)
         {
+            // Not the package's archive to record; a consumer who configured their own HAR in
+            // browserContextOptions keeps it.
             return options;
         }
 
+        // The framework wins on the archive so every HAR lands next to the report, whatever the
+        // consumer configured, and the filter stays in one place (harOptions).
         options.RecordHarPath = Path.Combine(ArtifactDirectory.Root, $"sut-{Guid.NewGuid():N}.har");
-
-        // An empty filter means "record every request"; Playwright treats an absent filter the
-        // same way, so there is no need to hand it a pattern that would only add noise.
-        if (!string.IsNullOrWhiteSpace(harOptions.UrlFilter))
-        {
-            options.RecordHarUrlFilterString = harOptions.UrlFilter;
-        }
+        options.RecordHarUrlFilterString = string.IsNullOrWhiteSpace(harOptions.UrlFilter) ? null : harOptions.UrlFilter;
+        options.RecordHarUrlFilter = null;
+        options.RecordHarUrlFilterRegex = null;
 
         return options;
     }

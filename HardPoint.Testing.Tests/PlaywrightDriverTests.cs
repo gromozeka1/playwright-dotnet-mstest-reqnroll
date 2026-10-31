@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using HardPoint.Testing.Config;
 using HardPoint.Testing.Driver;
 using Microsoft.Playwright;
@@ -69,13 +70,91 @@ public sealed class PlaywrightDriverTests
         Assert.IsNull(options.RecordHarUrlFilterString);
     }
 
-    private BrowserNewContextOptions BuildContextOptions(HarOptions harOptions)
+    [TestMethod]
+    public void ConsumerBrowserContextOptionsArePassedThrough()
+    {
+        var storageStatePath = Path.Combine(_outputDirectory, "auth", "state.json");
+
+        BrowserNewContextOptions options = BuildContextOptions(
+            new HarOptions(),
+            new BrowserNewContextOptions
+            {
+                StorageStatePath = storageStatePath,
+                BaseURL = "http://localhost:5168",
+                Locale = "en-GB",
+                TimezoneId = "Europe/Warsaw",
+                IgnoreHTTPSErrors = true,
+                ExtraHTTPHeaders = new Dictionary<string, string> { ["x-api-key"] = "secret" },
+                ViewportSize = new ViewportSize { Width = 1440, Height = 900 },
+                Permissions = ["geolocation"],
+            });
+
+        Assert.AreEqual(storageStatePath, options.StorageStatePath);
+        Assert.AreEqual("http://localhost:5168", options.BaseURL);
+        Assert.AreEqual("en-GB", options.Locale);
+        Assert.AreEqual("Europe/Warsaw", options.TimezoneId);
+        Assert.AreEqual(true, options.IgnoreHTTPSErrors);
+        Assert.AreEqual("secret", options.ExtraHTTPHeaders!.Single().Value);
+        Assert.AreEqual(1440, options.ViewportSize!.Width);
+        Assert.AreEqual(900, options.ViewportSize.Height);
+        Assert.AreEqual("geolocation", options.Permissions!.Single());
+    }
+
+    [TestMethod]
+    public void FrameworkWinsOnTheHarSettings()
+    {
+        var consumerHarPath = Path.Combine(_outputDirectory, "consumer.har");
+
+        BrowserNewContextOptions options = BuildContextOptions(
+            new HarOptions { UrlFilter = "**/api/**" },
+            new BrowserNewContextOptions
+            {
+                RecordHarPath = consumerHarPath,
+                RecordHarUrlFilter = "**/consumer/**",
+                RecordHarUrlFilterRegex = new Regex("consumer"),
+            });
+
+        AssertHarPathIsRoutedToArtifacts(options.RecordHarPath);
+        Assert.AreNotEqual(consumerHarPath, options.RecordHarPath);
+        Assert.AreEqual("**/api/**", options.RecordHarUrlFilterString);
+        Assert.IsNull(options.RecordHarUrlFilter);
+        Assert.IsNull(options.RecordHarUrlFilterRegex);
+    }
+
+    [TestMethod]
+    public void RecordHarFalseLeavesTheConsumersOwnHarConfigurationAlone()
+    {
+        var consumerHarPath = Path.Combine(_outputDirectory, "consumer.har");
+
+        BrowserNewContextOptions options = BuildContextOptions(
+            new HarOptions { RecordHar = false },
+            new BrowserNewContextOptions { RecordHarPath = consumerHarPath });
+
+        Assert.AreEqual(consumerHarPath, options.RecordHarPath);
+    }
+
+    [TestMethod]
+    public void ContextOptionsAreCopiedSoParallelScenariosDoNotShareOneInstance()
+    {
+        var consumerOptions = new BrowserNewContextOptions { Locale = "en-GB" };
+
+        BrowserNewContextOptions options = BuildContextOptions(new HarOptions(), consumerOptions);
+
+        Assert.AreNotSame(consumerOptions, options);
+        options.Locale = "de-DE";
+        Assert.AreEqual("en-GB", consumerOptions.Locale, "building one context must not change the settings");
+    }
+
+    private BrowserNewContextOptions BuildContextOptions(
+        HarOptions harOptions,
+        BrowserNewContextOptions? browserContextOptions = null)
     {
         ConfigReader.Settings = new TestSettings
         {
             BrowserType = "chromium",
             ApplicationUrl = "http://localhost:5168",
             OutputDirectory = _outputDirectory,
+            BrowserContextOptions = browserContextOptions ?? new BrowserNewContextOptions(),
             HarOptions = harOptions,
         };
 

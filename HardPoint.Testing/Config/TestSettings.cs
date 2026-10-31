@@ -14,6 +14,14 @@ public class TestSettings
     [JsonPropertyName("browserOptions")]
     public BrowserTypeLaunchOptions BrowserTypeLaunchOptions { get; set; } = new();
 
+    /// <summary>
+    /// Passed to <c>IBrowser.NewContextAsync</c>: storage state, extra headers, viewport, locale,
+    /// time zone, permissions, base URL and the rest of the context surface the package does not
+    /// own. The HAR path and filter stay with <see cref="HarOptions"/>.
+    /// </summary>
+    [JsonPropertyName("browserContextOptions")]
+    public BrowserNewContextOptions BrowserContextOptions { get; set; } = new();
+
     [JsonPropertyName("apiOptions")]
     public APIRequestNewContextOptions APIRequestNewContextOptions { get; set; } = new();
 
