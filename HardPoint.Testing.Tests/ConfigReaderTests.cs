@@ -12,6 +12,7 @@ public sealed class ConfigReaderTests
     private const string _configFileVariable = "TEST_CONFIG_FILE";
     private const string _headlessVariable = "TEST_Headless";
     private const string _apiBaseUrlVariable = "TEST_APIRequestNewContextOptions__BaseURL";
+    private const string _harRecordVariable = "TEST_HarOptions__RecordHar";
     private const string _argsVariable = "TEST_Args";
     private const string _unknownVariable = "TEST_NotASetting";
     private const string _baseDirectoryConfigFile = "relative-config-test.json";
@@ -21,6 +22,7 @@ public sealed class ConfigReaderTests
         _configFileVariable,
         _headlessVariable,
         _apiBaseUrlVariable,
+        _harRecordVariable,
         _argsVariable,
         _unknownVariable,
     ];
@@ -162,6 +164,35 @@ public sealed class ConfigReaderTests
     }
 
     [TestMethod]
+    public void HarOptionsDefaultToRecordingEveryRequest()
+    {
+        // The config file predates harOptions, so the section is absent and the defaults apply.
+        ConfigureTempConfigFile();
+
+        Assert.IsTrue(ConfigReader.Settings.HarOptions.RecordHar);
+        Assert.AreEqual("**/*", ConfigReader.Settings.HarOptions.UrlFilter);
+    }
+
+    [TestMethod]
+    public void HarOptionsAreReadFromTheConfigFile()
+    {
+        ConfigureTempConfigFile("har.json", CreateHarConfig(recordHar: false, urlFilter: "**/api/**"));
+
+        Assert.IsFalse(ConfigReader.Settings.HarOptions.RecordHar);
+        Assert.AreEqual("**/api/**", ConfigReader.Settings.HarOptions.UrlFilter);
+    }
+
+    [TestMethod]
+    public void HarOptionOverrideAppliesToNestedSetting()
+    {
+        ConfigureTempConfigFile("har-override.json", CreateHarConfig());
+        Environment.SetEnvironmentVariable(_harRecordVariable, "false");
+        ConfigReader.Reload();
+
+        Assert.IsFalse(ConfigReader.Settings.HarOptions.RecordHar);
+    }
+
+    [TestMethod]
     public void MalformedJsonThrowsWithPathInMessage()
     {
         var configPath = Path.Combine(_tempDirectory, "broken.json");
@@ -175,12 +206,23 @@ public sealed class ConfigReaderTests
         StringAssert.Contains(exception.Message, "is invalid");
     }
 
-    private void ConfigureTempConfigFile()
+    private void ConfigureTempConfigFile(string fileName = "config.json", string? content = null)
     {
-        var configPath = Path.Combine(_tempDirectory, "config.json");
-        File.WriteAllText(configPath, CreateConfig());
+        var configPath = Path.Combine(_tempDirectory, fileName);
+        File.WriteAllText(configPath, content ?? CreateConfig());
         Environment.SetEnvironmentVariable(_configFileVariable, configPath);
     }
+
+    private static string CreateHarConfig(bool recordHar = true, string urlFilter = "**/*") => $$"""
+        {
+          "browserType": "chromium",
+          "applicationUrl": "http://localhost:5168",
+          "harOptions": {
+            "recordHar": {{(recordHar ? "true" : "false")}},
+            "urlFilter": "{{urlFilter}}"
+          }
+        }
+        """;
 
     private static string CreateConfig(string applicationUrl = "http://localhost:5168") => $$"""
         {

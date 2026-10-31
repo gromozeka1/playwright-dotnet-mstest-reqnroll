@@ -5,6 +5,17 @@ All notable changes to `HardPoint.Testing` are recorded here. The format follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Any change to a binding
 signature, the configuration shape or the tag vocabulary is at least a minor bump.
 
+## [0.1.0-preview.3] - 2026-10-31
+
+### Changed
+
+- HAR recording no longer carries the demo suite's URL filter. `PlaywrightDriver` hard-coded
+  `**/Product/**`, so a consumer testing anything else got an almost empty archive — exactly the
+  artifact a failing CI run needs. The filter now comes from `harOptions.urlFilter` and defaults
+  to `**/*`, which records every request; `harOptions.recordHar` (default `true`) turns recording
+  off entirely. Configurations that do not mention `harOptions` keep one HAR per browser context,
+  now covering the whole application.
+
 ## [0.1.0-preview.2] - 2026-10-31
 
 ### Changed

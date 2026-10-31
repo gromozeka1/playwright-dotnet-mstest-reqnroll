@@ -121,13 +121,33 @@ public class PlaywrightDriver : IDisposable, IAsyncDisposable
     private async Task<IPage> CreatePageAsync() => await (await _browserContext.Value).NewPageAsync();
 
     private async Task<IBrowserContext> CreateBrowserContext()
+        => await (await _browser.Value).NewContextAsync(CreateBrowserContextOptions());
+
+    /// <summary>
+    /// Builds the context options the package owns: a HAR archive routed to the artifact
+    /// directory unless <see cref="HarOptions.RecordHar"/> turns recording off, filtered by
+    /// <see cref="HarOptions.UrlFilter"/> rather than by any URL pattern from one test suite.
+    /// </summary>
+    internal BrowserNewContextOptions CreateBrowserContextOptions()
     {
-        var harPath = Path.Combine(ArtifactDirectory.Root, $"sut-{Guid.NewGuid():N}.har");
-        return await (await _browser.Value).NewContextAsync(new BrowserNewContextOptions
+        HarOptions harOptions = _testSettings.HarOptions;
+        var options = new BrowserNewContextOptions();
+
+        if (!harOptions.RecordHar)
         {
-            RecordHarPath = harPath,
-            RecordHarUrlFilterString = "**/Product/**"
-        });
+            return options;
+        }
+
+        options.RecordHarPath = Path.Combine(ArtifactDirectory.Root, $"sut-{Guid.NewGuid():N}.har");
+
+        // An empty filter means "record every request"; Playwright treats an absent filter the
+        // same way, so there is no need to hand it a pattern that would only add noise.
+        if (!string.IsNullOrWhiteSpace(harOptions.UrlFilter))
+        {
+            options.RecordHarUrlFilterString = harOptions.UrlFilter;
+        }
+
+        return options;
     }
 
     /// <summary>

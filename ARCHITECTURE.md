@@ -23,8 +23,8 @@ documentation, not notes.
 
 | Project | Type | Notes |
 |---|---|---|
-| `HardPoint.Testing/` | Packable class library (`net10.0`) | The package itself — 8 source files |
-| `HardPoint.Testing.Tests/` | MSTest | 14 unit tests: configuration reading and artifact-path resolution |
+| `HardPoint.Testing/` | Packable class library (`net10.0`) | The package itself — 9 source files |
+| `HardPoint.Testing.Tests/` | MSTest | 21 unit tests: configuration reading, artifact-path resolution and the browser-context options the driver builds |
 | `HardPoint.Testing.SmokeTests/` | MSTest + Reqnroll | One real browser scenario against the **packed** package — **outside `TestAutomation.slnx`**, because it needs the `artifacts-smoke/` feed |
 
 Solution `TestAutomation.slnx`; .NET 10 pinned by `global.json`. Dependencies:
@@ -41,6 +41,7 @@ of the smoke project).
 | `Driver/BasePage.cs` | Page-object base with async ARIA-role locator and click helpers |
 | `Config/ConfigReader.cs` | Reads `TestSettings` from JSON with `TEST_` environment overrides |
 | `Config/TestSettings.cs` | The settings shape (Playwright launch/API-context option types) |
+| `Config/HarOptions.cs` | The HAR archive switch and URL filter (`harOptions`) |
 | `Helpers/ExtentReportManager.cs` | Thread-safe single HTML report, feature nodes cached by title |
 | `Helpers/ArtifactDirectory.cs` | Single artifact root routed by `outputDirectory` |
 | `Constants/ScenarioTags.cs` | `@ui`/`@api` plus the environment tag vocabulary |
@@ -61,8 +62,10 @@ Reqnroll DI resolves PlaywrightDriver (one per scenario)
 ```
 
 Resources are lazy: `@api` scenarios never launch a browser; the page and API context are created
-on first use. Disposal is asynchronous and ordered — page, context, browser, API context, driver —
-via `DisposeAsync()`; a synchronous `Dispose()` remains as an `IDisposable` adapter.
+on first use. A browser context also starts a HAR recording, written next to the report and filtered
+by `harOptions` — never by a URL pattern belonging to one test suite. Disposal is asynchronous and
+ordered — page, context, browser, API context, driver — via `DisposeAsync()`; a synchronous
+`Dispose()` remains as an `IDisposable` adapter.
 
 ## 4. Configuration contract
 
@@ -77,7 +80,8 @@ copy both with `CopyToOutputDirectory=PreserveNewest`.
   "enforceScenarioTags": false,
   "outputDirectory": "",
   "browserOptions": { "headless": true },
-  "apiOptions": { "BaseURL": "http://localhost:5044/api/", "IgnoreHTTPSErrors": true }
+  "apiOptions": { "BaseURL": "http://localhost:5044/api/", "IgnoreHTTPSErrors": true },
+  "harOptions": { "recordHar": true, "urlFilter": "**/*" }
 }
 ```
 
@@ -89,6 +93,7 @@ copy both with `CopyToOutputDirectory=PreserveNewest`.
 | `outputDirectory` | Root for report/traces/screenshots/HAR. Empty = test output directory; relative resolves against it |
 | `browserOptions` | Passed to `IBrowserType.LaunchAsync` |
 | `apiOptions` | Passed to `APIRequest.NewContextAsync` |
+| `harOptions` | HAR archive per browser context: `recordHar` (default `true`) turns recording off; `urlFilter` (default `**/*`) selects the recorded requests — empty also records every request |
 
 Override rules — these are **external API**, unit-tested:
 
@@ -124,7 +129,7 @@ still going green** — which is exactly what the smoke project exists to catch.
 | `TestReports.html` | The Extent HTML report, one block per feature |
 | `traces/` | `{scenario-title}-{id}.zip` per **failed** `@ui` scenario; passing traces are deleted |
 | `screenshots/` | Screenshots attached to report steps |
-| `sut-*.har` | One HAR archive per browser context |
+| `sut-*.har` | One HAR archive per browser context, unless `harOptions.recordHar` is `false` |
 
 `ArtifactDirectory` is public so consumer hooks can resolve the same paths.
 
@@ -167,7 +172,7 @@ The smoke project must keep covering the *package surface*, not grow into a seco
   [CHANGELOG.md](CHANGELOG.md).
 - **Any** change to a binding signature, the configuration shape or the tag vocabulary is **at least
   a minor bump**. Patches otherwise.
-- Versions stay prerelease until a consumer proves the API. Current: `0.1.0-preview.2`.
+- Versions stay prerelease until a consumer proves the API. Current: `0.1.0-preview.3`.
 - When a config key, tag or binding changes, update `HardPoint.Testing/README.md` in the same change
   — it ships inside the package.
 

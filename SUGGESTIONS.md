@@ -19,7 +19,7 @@ surface and therefore need at least a minor version bump.
 
 ## 🔴 Correctness & contract
 
-### 1. The HAR filter is hard-coded to this demo's URLs — a leak from the SUT into the package
+### 1. The HAR filter is hard-coded to this demo's URLs — a leak from the SUT into the package — ✅ done
 `PlaywrightDriver` records a HAR for every browser context, filtered to `**/Product/**`:
 
 ```csharp
@@ -36,6 +36,13 @@ HAR containing almost nothing — precisely the artifact they would reach for wh
 **Suggestion:** move the filter into configuration (`harOptions.urlFilter`, default `**/*`) or drop it
 and record everything, then honour `recordHar: false` to turn recording off. This is the clearest
 example of SUT-specific knowledge that survived the split; check for others while fixing it.
+
+**Done in 0.1.0-preview.3.** `harOptions.urlFilter` now defaults to `**/*` and `harOptions.recordHar`
+(default `true`) turns recording off, which also settles item 8. The unit tests pin the options the
+driver builds, and a browser check confirmed the old filter wrote zero entries for a non-Product
+site while `**/*` writes them all. The remaining sources were re-checked for SUT-specific values:
+none — the only URLs left are the ones the consumer configures (`applicationUrl`,
+`apiOptions.BaseURL`).
 
 ### 2. `browserType` is validated only when the browser launches
 The switch validates the setting at the point of first use:
@@ -137,11 +144,13 @@ which is most of them.
 **Suggestion:** a `trace` setting with Playwright's familiar semantics — `off`, `on`,
 `retain-on-failure` (default, current behaviour). Local runs get faster; CI keeps the artifact.
 
-### 8. A HAR is recorded for every context whether or not anyone wants it
+### 8. A HAR is recorded for every context whether or not anyone wants it — ✅ done
 Same shape as item 7: unconditional recording costs disk and I/O, and the artifact only matters for
 failures.
 
 **Suggestion:** `recordHar` (default `true` to preserve behaviour) plus the filter from item 1.
+
+**Done with item 1:** `harOptions.recordHar` and `harOptions.urlFilter` ship in 0.1.0-preview.3.
 
 ### 9. `BasePage` stops just short of what page objects actually repeat
 The helpers (`LinkAsync`, `ButtonAsync`, `RowAsync`, `TextAsync`, `ClickLinkAsync`,
@@ -240,11 +249,11 @@ minimum: package reference, `appsettings.json`, one hooks class, one page object
 
 ## Suggested order of attack
 
-1. **Items 1–3** — the three silent failures: the leaked HAR filter, the late `browserType` check and
-   the undetected serial run. They are small, and each currently costs a consumer a debugging session.
+1. **Items 2–3** — the remaining silent failures: the late `browserType` check and the undetected
+   serial run. They are small, and each currently costs a consumer a debugging session.
 2. **Item 6** (browser-context options) — unlocks authentication, the most likely next requirement.
 3. **Items 4, 5, 15** — packaging hygiene: API-compat baseline, SourceLink, XML docs. Do them together
    before `1.0.0`, when the baseline is cheapest to establish.
-4. **Items 7, 8, 11** — make traces/HARs deliberate and reachable from the report.
+4. **Items 7, 11** — make traces deliberate and reachable from the report.
 5. **Items 12, 13, 14** — verification: browser matrix, coverage floor, dependency scanning.
 6. **Items 9, 10, 16, 17** — ergonomics and docs, as consumers ask for them.

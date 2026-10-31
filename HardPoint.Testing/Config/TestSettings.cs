@@ -18,6 +18,12 @@ public class TestSettings
     public APIRequestNewContextOptions APIRequestNewContextOptions { get; set; } = new();
 
     /// <summary>
+    /// The HAR archive recorded per browser context, and the URL filter applied to it.
+    /// </summary>
+    [JsonPropertyName("harOptions")]
+    public HarOptions HarOptions { get; set; } = new();
+
+    /// <summary>
     /// Rejects scenarios that are missing an environment tag or a test-type tag before they run.
     /// Off by default so the package does not impose a tagging policy on consumers.
     /// </summary>
