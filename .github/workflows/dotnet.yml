@@ -35,9 +35,27 @@ jobs:
     - name: Build
       run: dotnet build TestAutomation.slnx --no-restore -c "$CONFIGURATION"
     - name: Unit tests
-      run: dotnet test HardPoint.Testing.Tests/HardPoint.Testing.Tests.csproj --no-build -c "$CONFIGURATION" --logger "console;verbosity=normal"
+      run: |
+        set -o pipefail
+        dotnet test HardPoint.Testing.Tests/HardPoint.Testing.Tests.csproj --no-build -c "$CONFIGURATION" --logger "console;verbosity=normal" | tee framework-test-run.log
+
+        total=$(grep -E '^\s*Total tests:' framework-test-run.log | awk '{print $3}')
+        passed=$(grep -E '^\s*Passed:' framework-test-run.log | awk '{print $2}')
+
+        [ -z "$total" ] && total=0
+        [ -z "$passed" ] && passed=0
+
+        echo "Framework unit tests: $total tests, $passed passed" >> "$GITHUB_STEP_SUMMARY"
+        printf '| Result | Count |\n| --- | --- |\n| Total | %s |\n| Passed | %s |\n' "$total" "$passed" >> "$GITHUB_STEP_SUMMARY"
     - name: Format check
-      run: dotnet format TestAutomation.slnx --verify-no-changes
+      run: |
+        set -o pipefail
+        dotnet format TestAutomation.slnx --verify-no-changes | tee format-check.log
+        if [ -s format-check.log ]; then
+          echo '```\n' >> "$GITHUB_STEP_SUMMARY"
+          sed 's/^/    /' format-check.log >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+        fi
     - name: Pack
       run: dotnet pack HardPoint.Testing/HardPoint.Testing.csproj --no-build -c "$CONFIGURATION" -o "$OUTPUT_DIR"
     - name: Upload package

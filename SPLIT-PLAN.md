@@ -266,10 +266,19 @@ test-side until a second consumer wants the same guard.
 ## 9. What the split leaves open
 
 Split mechanics are done; what remains is framework hygiene and suite improvements, not
-migration work:
+migration work. The framework items raised by the split are now closed:
 
-- `BaseHook.AttachScreenshotOnFailure` screenshots every `@ui` scenario — restore the
-  failure-only guard.
-- `PlaywrightDriver` blocking calls (`Task.Run(...).Wait()`, `_page.Value.Result`).
-- The suite's `test.runsettings` is commented-out boilerplate and is never applied in CI.
-- The suite's own backlog lives in `hardpoint-tests/SUGGESTIONS.md`.
+- ✅ `BaseHook.AttachScreenshotOnFailure` captures only failed `@ui` scenarios again.
+- ✅ `PlaywrightDriver` no longer blocks on `Task.Run(...).Wait()` or guesses with fixed 500 ms
+  delays: `DisposeAsync` closes page, context, browser, API context and the driver in order, and
+  `Page` unwraps launch failures instead of throwing `AggregateException`.
+- ✅ The suite's `test.runsettings` — commented-out boilerplate that CI never applied — is
+  deleted, along with the property and copy item that referenced it.
+
+Still open, deliberately:
+
+- `PlaywrightDriver.Page` remains a synchronous bridge over the lazy page, because page objects
+  expose synchronous locators. Async code uses `GetPageAsync()`; a fully async page API would be
+  a breaking change for consumers.
+- The suite's backlog: flakiness detection first, then contract, data-driven and accessibility
+  coverage — see `hardpoint-tests/SUGGESTIONS.md`.

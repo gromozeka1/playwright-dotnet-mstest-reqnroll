@@ -41,7 +41,8 @@ public abstract class BaseHook
     public async Task OpenApplication(PlaywrightDriver playwrightDriver, ScenarioContext scenarioContext)
     {
         await playwrightDriver.StartTracingAsync(scenarioContext.ScenarioInfo.Title);
-        await playwrightDriver.Page.GotoAsync(ConfigReader.Settings.ApplicationUrl);
+        IPage page = await playwrightDriver.GetPageAsync();
+        await page.GotoAsync(ConfigReader.Settings.ApplicationUrl);
     }
 
     [AfterStep]
@@ -64,16 +65,17 @@ public abstract class BaseHook
     [AfterScenario(ScenarioTags.UI)]
     public async Task AttachScreenshotOnFailure(ScenarioContext scenarioContext, PlaywrightDriver playwrightDriver, IReqnrollOutputHelper output)
     {
-        //if (scenarioContext.TestError is null)
-        //{
-        //    return;
-        //}
+        if (scenarioContext.TestError is null)
+        {
+            return;
+        }
 
         _ = Directory.CreateDirectory(ArtifactDirectory.Screenshots);
 
         var path = Path.Combine(ArtifactDirectory.Screenshots, $"{Guid.NewGuid():N}.png");
 
-        _ = await playwrightDriver.Page.ScreenshotAsync(new PageScreenshotOptions
+        IPage page = await playwrightDriver.GetPageAsync();
+        _ = await page.ScreenshotAsync(new PageScreenshotOptions
         {
             Path = path,
             FullPage = true
@@ -83,9 +85,9 @@ public abstract class BaseHook
     }
 
     [AfterTestRun]
-    public static void AfterTestRun(PlaywrightDriver playwrightDriver, ExtentReportManager extentReportManager)
+    public static async Task AfterTestRun(PlaywrightDriver playwrightDriver, ExtentReportManager extentReportManager)
     {
         extentReportManager.Dispose();
-        playwrightDriver.Dispose();
+        await playwrightDriver.DisposeAsync();
     }
 }

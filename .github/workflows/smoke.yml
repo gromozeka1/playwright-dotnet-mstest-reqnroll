@@ -67,6 +67,13 @@ jobs:
         # package whose Reqnroll integration no longer produces tests, so require it to have run.
         grep -Eq 'Total tests:[[:space:]]+1' smoke-test.log
         grep -Eq '^[[:space:]]*Passed:[[:space:]]+1' smoke-test.log
+
+        total=$(grep -E '^\s*Total tests:' smoke-test.log | awk '{print $3}')
+        passed=$(grep -E '^[[:space:]]*Passed:' smoke-test.log | awk '{print $2}')
+        [ -z "$total" ] && total=0
+        [ -z "$passed" ] && passed=0
+
+        echo "Package smoke test: $total tests, $passed passed" >> "$GITHUB_STEP_SUMMARY"
     - name: Check the run wrote a report
       shell: bash
       run: |
