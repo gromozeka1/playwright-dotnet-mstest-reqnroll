@@ -7,7 +7,7 @@
     <Nullable>enable</Nullable>
 
     <PackageId>HardPoint.Testing</PackageId>
-    <Version>0.1.0-preview.2</Version>
+    <Version>0.1.0-preview.3</Version>
     <Authors>Andrei</Authors>
     <Description>Playwright, MSTest and Reqnroll test framework: browser and API driver lifecycle, JSON test configuration, ExtentReports integration and scenario hooks.</Description>
     <PackageTags>playwright;mstest;reqnroll;bdd;ui-testing;api-testing;extentreports</PackageTags>
@@ -27,6 +27,12 @@
 
   <ItemGroup>
     <None Update="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <!-- Lets the unit tests exercise the context options the driver builds without launching a
+       browser, and without widening the public surface. -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="HardPoint.Testing.Tests" />
   </ItemGroup>
 
 </Project>

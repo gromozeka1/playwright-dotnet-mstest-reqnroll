@@ -38,7 +38,8 @@ Copy both with `CopyToOutputDirectory=PreserveNewest`.
   "enforceScenarioTags": false,
   "outputDirectory": "",
   "browserOptions": { "headless": true },
-  "apiOptions": { "BaseURL": "http://localhost:5044/api/", "IgnoreHTTPSErrors": true }
+  "apiOptions": { "BaseURL": "http://localhost:5044/api/", "IgnoreHTTPSErrors": true },
+  "harOptions": { "recordHar": true, "urlFilter": "**/*" }
 }
 ```
 
@@ -50,6 +51,8 @@ Copy both with `CopyToOutputDirectory=PreserveNewest`.
 | `outputDirectory` | Directory for `TestReports.html`, `traces/`, `screenshots/` and `sut-*.har`. Empty means the test output directory; a relative path resolves against it. |
 | `browserOptions` | Passed to `IBrowserType.LaunchAsync`. |
 | `apiOptions` | Passed to `APIRequest.NewContextAsync`. |
+| `harOptions.recordHar` | Record a HAR archive per browser context. Default `true`; `false` turns recording off. |
+| `harOptions.urlFilter` | Playwright glob or regex selecting the requests written to the archive. Default `**/*`, so the archive covers the whole application rather than one suite's URLs; an empty value also records every request. |
 
 `TEST_`-prefixed environment variables override the file: `TEST_Headless=true` matches the
 `headless` key wherever it appears, and `TEST_APIRequestNewContextOptions__BaseURL=...`
@@ -81,4 +84,5 @@ A missing or malformed file fails with a message naming the resolved path and th
 `TestReports.html` is written to the artifact directory at the end of the run. `traces/`
 holds a Playwright trace archive per failed `@ui` scenario; open one with
 `playwright show-trace <file>.zip`. `screenshots/` holds screenshots attached to the report.
+`sut-*.har` holds one archive per browser context, unless `harOptions.recordHar` is `false`.
 `ArtifactDirectory` is public if your own hooks need the same paths.
