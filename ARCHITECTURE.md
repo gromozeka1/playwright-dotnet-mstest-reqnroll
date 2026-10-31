@@ -258,5 +258,6 @@ stays test-side until a second consumer wants the same guard.
 | Build, pack, smoke test, publishing | [README.md](README.md) |
 | The contract as consumers see it | [HardPoint.Testing/README.md](HardPoint.Testing/README.md) |
 | What changed in each version | [CHANGELOG.md](CHANGELOG.md) |
+| What to improve next, and why | [SUGGESTIONS.md](SUGGESTIONS.md) |
 | Why the repos are split this way | §13 above |
 | Agent-facing rules | [AGENTS.md](AGENTS.md), [CLAUDE.md](CLAUDE.md) |
