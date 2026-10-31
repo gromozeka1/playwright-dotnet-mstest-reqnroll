@@ -214,13 +214,42 @@ can be unlisted but never deleted, so a broken package must not reach nuget.org.
 - **Commits**: imperative and concise. Do not commit `bin/`, `obj/`, `*.nupkg`, `*.snupkg`,
   `artifacts/`, `artifacts-smoke/` or generated reports.
 
-## 13. History
+## 13. Why the repositories are split
 
-The package was extracted from a single repository that also held the suite. The record of that
-split — decisions, phases, the seven landmines it introduced (all resolved), and what it
-deliberately left open — is [SPLIT-PLAN.md](SPLIT-PLAN.md). It explains *why* the contract in §5
-looks the way it does; read it before "simplifying" any of those boundaries back into one
-repository.
+The package was extracted from a single repository that also held the suite. The migration is
+finished; this section is the durable record of *why* the boundaries sit where they do. Read it
+before "simplifying" any of them back into one repository.
+
+### Decisions that shaped it
+
+| Decision | Choice | Why |
+|---|---|---|
+| Separate repositories vs. monorepo | Separate repositories | Makes the package boundary real, and keeps the suite free of framework internals. A monorepo would let the package quietly depend on project internals. |
+| Runner coupling | One MSTest + Reqnroll package | Splitting into core/`.MSTest`/`.Reqnroll` doubles packaging work for no benefit while there is only one runner flavour. |
+| Package id | `HardPoint.Testing`, namespace `HardPoint.Testing.*` | `Framework` is too generic for a public id. |
+| Versioning | Prereleases until a consumer proves the API | Leaves room to break the API during migration; `1.0.0` once proven. |
+| Dev loop | `-p:UseLocalFramework=true` swaps in a `ProjectReference` | CI and fresh clones always consume the published package; framework work stays fast. |
+| Publishing | Trusted Publishing (OIDC) | No long-lived API key; `NUGET_USER` is the only stored secret. |
+
+### Safeguards, and the traps they prevent
+
+Every row below was a silent-failure mode found while splitting: the build stays green and the
+symptom shows up as lost coverage or a stale package. All are closed, and the smoke project is what
+keeps them closed.
+
+| Trap | Why it is silent | Prevented now by |
+|---|---|---|
+| Reqnroll does not discover `BaseHook` in the package assembly | `@ui` scenarios lose navigation, tracing and reporting while still passing | `bindingAssemblies: []` verified against a real consumer; the smoke project runs an actual scenario |
+| `[assembly: Parallelize]` shipped inside the package | The suite passes, just serially — 5–10× slower | Declared in the consumer's `AssemblyInfo.cs`; §5 |
+| Tag vocabulary defined twice | `@local` rejected by one list and accepted by another | Single-sourced in `ScenarioTags`; §4 |
+| Config-file contract understood differently by consumers | First run dies with `TypeInitializationException` | Packed README plus unit tests on the failure messages; §4 |
+| Version drift between the two repositories | The suite silently tests an old package | One `HardPointTestingVersion` property plus the weekly canary |
+
+### Deliberately not in the package
+
+Page objects, step definitions, feature files, `docker-compose.yml`, `appsettings*.json` and
+`reqnroll.json`. `SutAvailability` is the borderline case — it only probes two configured URLs — and
+stays test-side until a second consumer wants the same guard.
 
 ## 14. Where else to read
 
@@ -229,5 +258,5 @@ repository.
 | Build, pack, smoke test, publishing | [README.md](README.md) |
 | The contract as consumers see it | [HardPoint.Testing/README.md](HardPoint.Testing/README.md) |
 | What changed in each version | [CHANGELOG.md](CHANGELOG.md) |
-| Why the repos are split this way | [SPLIT-PLAN.md](SPLIT-PLAN.md) |
+| Why the repos are split this way | §13 above |
 | Agent-facing rules | [AGENTS.md](AGENTS.md), [CLAUDE.md](CLAUDE.md) |
