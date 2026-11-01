@@ -5,6 +5,17 @@ All notable changes to `HardPoint.Testing` are recorded here. The format follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Any change to a binding
 signature, the configuration shape or the tag vocabulary is at least a minor bump.
 
+## [0.1.0-preview.10] - 2026-11-01
+
+### Added
+
+- `BasePage` form helpers: `FillAsync`, `SelectAsync`, `WaitForLoadStateAsync`, and `InRowAsync` for
+  an element scoped to a named row — the boilerplate every page object repeated.
+- `ApiClient` over the scenario's API request context: `PostJsonAsync`, `PutJsonAsync` and
+  `GetJsonAsync<T>` set the JSON body, and a non-success call attaches the request and response
+  bodies to the report (`ExtentReportManager.AttachNote`).
+- A compatibility matrix and a quickstart walkthrough in the packaged README.
+
 ## [0.1.0-preview.9] - 2026-11-01
 
 ### Added

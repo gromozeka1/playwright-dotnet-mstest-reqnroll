@@ -13,7 +13,9 @@ public class SmokePage(PlaywrightDriver playwrightDriver) : BasePage(playwrightD
         => (await GetPageAsync()).GetByRole(AriaRole.Status);
 
     public async Task TypeNoteAsync(string note)
-        => await (await GetPageAsync()).GetByLabel("Note").FillAsync(note);
+        => await FillAsync("Note", note);
+
+    public Task WaitForLoadAsync() => WaitForLoadStateAsync();
 
     public async Task SubmitAsync() => await ClickButtonAsync("Submit");
 }

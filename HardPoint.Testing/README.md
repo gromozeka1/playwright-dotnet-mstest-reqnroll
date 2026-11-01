@@ -15,13 +15,63 @@ The package depends on `Microsoft.Playwright`, `Reqnroll.MSTest` and `ExtentRepo
 Target framework is `net10.0`. XML documentation and SourceLink ship with it, so IntelliSense and
 *Go to definition* land on the source for the exact version.
 
+## Compatibility
+
+| HardPoint.Testing | Microsoft.Playwright | Reqnroll | MSTest | Target |
+|---|---|---|---|---|
+| `0.1.0-preview.10` | `1.63.0` | `3.3.4` | `4.5.1` | `net10.0` |
+
+Only the MSTest flavour of Reqnroll is supported; NUnit, xUnit and TUnit are not.
+
+## Quickstart
+
+A consumer needs one config file, one hooks class, one page object and one feature. The
+`HardPoint.Testing.SmokeTests` project in this repository is a working example of exactly this
+shape, packed and run in CI.
+
+```csharp
+// Hooks.cs — BaseHook carries [Binding]; Reqnroll discovers it from the package.
+[Binding]
+public sealed class Hooks : BaseHook;
+
+// ProductPage.cs — drop to raw Playwright through GetPageAsync whenever a helper is missing.
+public sealed class ProductPage(PlaywrightDriver driver) : BasePage(driver)
+{
+    public async Task SearchAsync(string term) => await FillAsync("Search", term);
+}
+```
+
+```gherkin
+@ui @local
+Scenario: Searching finds a product
+  Given the product page is open
+  When I search for "widget"
+  Then the results show "widget"
+```
+
+`appsettings.json`, copied to the test output directory:
+
+```json
+{ "browserType": "chromium", "applicationUrl": "http://localhost:5168" }
+```
+
+`Given` is satisfied by `BaseHook` navigating to `applicationUrl`; the other steps call the page
+object. `dotnet test` then writes `TestReports.html` and the failure artifacts next to the assembly.
+An API-only suite can skip the page object and use `ApiClient` instead:
+
+```csharp
+var client = new ApiClient(playwrightDriver, extentReportManager);
+var product = await client.GetJsonAsync<Product>("api/products/1");
+```
+
 ## What it provides
 
 | Type | Purpose |
 |---|---|
 | `PlaywrightDriver` | One instance per scenario, resolved by Reqnroll's DI container. Exposes asynchronous `GetPageAsync()`, `Browser`, `BrowserContext`, `ApiRequestContext`, tracing and screenshots. |
 | `BaseHook` | `[Binding]` that validates scenario tags, starts the Extent report node, opens the application for `@ui` scenarios, records failure traces and screenshots, and disposes the report and driver after the run. Derive from it in your own hooks class. |
-| `BasePage` | Base class for page objects with asynchronous ARIA-role locator and click helpers. |
+| `BasePage` | Base class for page objects with asynchronous ARIA-role locators, click, fill, select, row-scoped and load-state helpers. |
+| `ApiClient` | JSON helpers over the scenario's API context: `PostJsonAsync`, `PutJsonAsync`, `GetJsonAsync<T>`. A non-success status attaches the request and response bodies to the report. |
 | `ConfigReader` | Reads `TestSettings` from JSON, with `TEST_`-prefixed environment overrides. |
 | `ScenarioTags` | The `@ui` / `@api` test-type tags and the `@local` / `@dev` / `@qa` / `@stage` / `@prod` environment tags. |
 | `ArtifactDirectory` | Resolves where the report, traces, screenshots and HAR files are written. |

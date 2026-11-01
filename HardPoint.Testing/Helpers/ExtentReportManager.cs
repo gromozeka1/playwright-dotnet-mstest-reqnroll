@@ -23,9 +23,20 @@ public class ExtentReportManager : IDisposable
     private static readonly Dictionary<string, ExtentTest> _featuresByTitle = new(StringComparer.Ordinal);
     private static ExtentReports? _extentReports;
 
+    // The scenario node this manager opened, and the synthetic "Artifacts" step under it.
     private ExtentTest? _scenario;
     private ExtentTest? _artifacts;
     private bool _disposedValue;
+
+    // Unit tests swap the artifact directory between cases; the reporter is process-wide.
+    internal static void ResetForTests()
+    {
+        lock (_reportLock)
+        {
+            _extentReports = null;
+            _featuresByTitle.Clear();
+        }
+    }
 
     /// <summary>Wires the shared reporter to <c>TestReports.html</c> in the artifact directory.</summary>
     public ExtentReportManager()
@@ -81,7 +92,15 @@ public class ExtentReportManager : IDisposable
     /// </summary>
     /// <param name="label">Short artifact name, for example <c>Trace</c>.</param>
     /// <param name="path">Path of the artifact.</param>
-    public void AttachArtifact(string label, string path)
+    public void AttachArtifact(string label, string path) => AttachNote(label, path);
+
+    /// <summary>
+    /// Adds a labelled note to the current scenario node — the API helper uses it for request and
+    /// response bodies on a failed call, and consumer hooks can add their own evidence.
+    /// </summary>
+    /// <param name="label">Short note name, for example <c>API</c>.</param>
+    /// <param name="note">The text to record.</param>
+    public void AttachNote(string label, string note)
     {
         lock (_reportLock)
         {
@@ -91,9 +110,9 @@ public class ExtentReportManager : IDisposable
             }
 
             // The Spark template renders log entries on Gherkin step nodes, not on the scenario
-            // node itself, so the artifacts live on one synthetic "Artifacts" step per scenario.
+            // node itself, so the entries live on one synthetic "Artifacts" step per scenario.
             _artifacts ??= _scenario.CreateNode(new GherkinKeyword("And"), "Artifacts");
-            _ = _artifacts.Info($"{label}: {path}");
+            _ = _artifacts.Info($"{label}: {note}");
         }
     }
 
