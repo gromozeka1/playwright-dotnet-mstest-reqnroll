@@ -90,12 +90,15 @@ These are public API; changing them affects every consumer:
 - **Settings.** `browserType` and `applicationUrl` are required; `browserType` is validated when
   the file is read (`chromium`, `firefox` or `webkit`, case-insensitive, stored canonically) so a
   typo never reaches the driver mid-scenario; `enforceScenarioTags`
-  defaults to `false` so the package imposes no tagging policy; `outputDirectory` routes the
+  defaults to `false` so the package imposes no tagging policy; `warnOnSerialExecution`
+  (default `true`) writes a one-time warning when the test assembly declares no
+  `[assembly: Parallelize]`; `outputDirectory` routes the
   report, traces, screenshots and HAR files (empty means the test output directory);
   `harOptions.recordHar` (default `true`) turns HAR recording off and `harOptions.urlFilter`
   (default `**/*`) selects the recorded requests — the package carries no suite-specific URL.
 - **Parallelism belongs to the consumer.** `[assembly: Parallelize]` must be declared in the
-  consuming test assembly; the package cannot do it for them.
+  consuming test assembly; the package cannot do it for them, but it warns once when it is
+  missing.
 - **Artifacts.** `TestReports.html` at the artifact root, `traces/` per failed `@ui`
   scenario, `screenshots/` for report attachments, `sut-*.har` per browser context
   (skipped when `harOptions.recordHar` is `false`).

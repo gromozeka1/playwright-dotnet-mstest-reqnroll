@@ -36,6 +36,7 @@ Copy both with `CopyToOutputDirectory=PreserveNewest`.
   "browserType": "chromium",
   "applicationUrl": "http://localhost:5168",
   "enforceScenarioTags": false,
+  "warnOnSerialExecution": true,
   "outputDirectory": "",
   "browserOptions": { "headless": true },
   "apiOptions": { "BaseURL": "http://localhost:5044/api/", "IgnoreHTTPSErrors": true },
@@ -48,6 +49,7 @@ Copy both with `CopyToOutputDirectory=PreserveNewest`.
 | `browserType` | `chromium`, `firefox` or `webkit`. Required, and validated when the file is read: any other value fails with the resolved path and the accepted values. Matching is case-insensitive; the canonical spelling is stored. |
 | `applicationUrl` | URL opened before each `@ui` scenario. Required. |
 | `enforceScenarioTags` | Reject a scenario that has no test-type tag (`@ui`/`@api`) or no environment tag, before it runs. Default `false`, so the package imposes no tagging policy unless you ask for it. |
+| `warnOnSerialExecution` | Write a one-time warning when the test assembly declares no `[assembly: Parallelize]`, because the suite would otherwise run serially while still passing. Default `true`; set `false` for a deliberately serial suite. |
 | `outputDirectory` | Directory for `TestReports.html`, `traces/`, `screenshots/` and `sut-*.har`. Empty means the test output directory; a relative path resolves against it. |
 | `browserOptions` | Passed to `IBrowserType.LaunchAsync`. |
 | `apiOptions` | Passed to `APIRequest.NewContextAsync`. |
@@ -70,6 +72,11 @@ A missing or malformed file fails with a message naming the resolved path and th
   ```csharp
   [assembly: Parallelize(Scope = ExecutionScope.MethodLevel)]
   ```
+
+  If the attribute is missing, `BaseHook` writes a one-time warning when the run starts rather
+  than leaving the suite silently serial; `warnOnSerialExecution: false` silences it. To keep
+  tag-marked features out of parallel runs, use Reqnroll's `addNonParallelizableMarkerForTags`
+  in `reqnroll.json`.
 
 - **Bindings.** `BaseHook` carries `[Binding]` and Reqnroll discovers it from the package
   reference with only `"bindingAssemblies": []` (verified with Reqnroll 3.3.4). If a future

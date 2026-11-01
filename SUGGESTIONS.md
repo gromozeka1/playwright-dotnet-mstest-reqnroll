@@ -69,7 +69,7 @@ itself throws with the resolved path and `'browserType' must be one of 'chromium
 the driver's switch only ever sees a valid value. Tests cover all three documented engines, the
 mixed-case spelling and the rejected value, all without launching a browser.
 
-### 3. The parallelism obligation fails silently — it can be detected instead
+### 3. The parallelism obligation fails silently — it can be detected instead — ✅ done
 The package's biggest trap is documented in the README: `[assembly: Parallelize]` must live in the
 consumer's assembly, and if it does not, the suite passes while running serially ([Reqnroll's docs
 say the same](https://docs.reqnroll.net/latest/execution/parallel-execution.html): MSTest runs
@@ -97,6 +97,15 @@ A warning rather than an exception keeps deliberately serial consumers working; 
 `warnOnSerialExecution` setting can turn it off. While in this area, consider surfacing Reqnroll's
 `addNonParallelizableMarkerForTags` — the supported way to exclude tag-marked features from parallel
 runs.
+
+**Done in 0.1.0-preview.5.** `BaseHook.WarnWhenParallelismIsNotConfigured` runs at
+`Order = int.MinValue + 1`, warns once per test process through `IReqnrollOutputHelper`, and names
+the assembly, the missing attribute and the `warnOnSerialExecution` opt-out. The attribute is matched
+from metadata by name instead of through `GetCustomAttribute<ParallelizeAttribute>()`: the package has
+no compile-time MSTest reference, and taking one bound the check to MSTest 2.2.8's assembly identity,
+which fails to load next to MSTest 4.x. Unit tests cover the warning, the once-per-run guard, the
+opt-out and both directions of the attribute check; the packaged README points at Reqnroll's
+`addNonParallelizableMarkerForTags` for tag-scoped exclusions.
 
 ### 4. There is no guard against accidental breaking changes **[contract]**
 A public surface of roughly fifty members, a semver policy in the README and CHANGELOG ("a binding signature, config-shape or
@@ -255,11 +264,9 @@ minimum: package reference, `appsettings.json`, one hooks class, one page object
 
 ## Suggested order of attack
 
-1. **Item 3** — the last silent failure: the undetected serial run. It is small, and it currently
-   costs a consumer a debugging session.
-2. **Item 6** (browser-context options) — unlocks authentication, the most likely next requirement.
-3. **Items 4, 5, 15** — packaging hygiene: API-compat baseline, SourceLink, XML docs. Do them together
+1. **Item 6** (browser-context options) — unlocks authentication, the most likely next requirement.
+2. **Items 4, 5, 15** — packaging hygiene: API-compat baseline, SourceLink, XML docs. Do them together
    before `1.0.0`, when the baseline is cheapest to establish.
-4. **Items 7, 11** — make traces deliberate and reachable from the report.
-5. **Items 12, 13, 14** — verification: browser matrix, coverage floor, dependency scanning.
-6. **Items 9, 10, 16, 17** — ergonomics and docs, as consumers ask for them.
+3. **Items 7, 11** — make traces deliberate and reachable from the report.
+4. **Items 12, 13, 14** — verification: browser matrix, coverage floor, dependency scanning.
+5. **Items 9, 10, 16, 17** — ergonomics and docs, as consumers ask for them.
