@@ -4,6 +4,10 @@ using Microsoft.Playwright;
 
 namespace HardPoint.Testing.Driver;
 
+/// <summary>
+/// One browser, one browser context and one API request context per scenario, created lazily and
+/// disposed in order. Reqnroll resolves it from its DI container.
+/// </summary>
 public class PlaywrightDriver : IDisposable, IAsyncDisposable
 {
     // Characters that are invalid in a file name on Windows, plus spaces and the
@@ -19,6 +23,7 @@ public class PlaywrightDriver : IDisposable, IAsyncDisposable
     private string? _tracePath;
     private bool _disposedValue;
 
+    /// <summary>Creates the driver from the current <see cref="ConfigReader.Settings"/>.</summary>
     public PlaywrightDriver()
     {
         _playwright = new Lazy<Task<IPlaywright>>(Playwright.CreateAsync);
@@ -28,18 +33,23 @@ public class PlaywrightDriver : IDisposable, IAsyncDisposable
         _apiRequestContext = new Lazy<Task<IAPIRequestContext>>(CreateApiContextAsync);
     }
 
+    /// <summary>The browser, launched on first access.</summary>
     public Task<IBrowser> Browser => _browser.Value;
 
+    /// <summary>The browser context, created on first access from the configured context options.</summary>
     public Task<IBrowserContext> BrowserContext => _browserContext.Value;
 
     /// <summary>Starts the browser (when it is not running yet) and returns the scenario's page.</summary>
     public Task<IPage> GetPageAsync() => _page.Value;
 
+    /// <summary>The API request context, created on first access.</summary>
     public Task<IAPIRequestContext> ApiRequestContext => _apiRequestContext.Value;
 
-    // Traces are captured for every UI scenario but only kept (exported to *.zip)
-    // when the scenario fails, so a failing CI run can be opened with
-    // `playwright show-trace <file>.zip` without tracking traces for green runs.
+    /// <summary>
+    /// Starts a Playwright trace for the scenario. The archive is kept only when
+    /// <see cref="StopTracingAsync"/> is asked to keep it, so green runs do not accumulate traces.
+    /// </summary>
+    /// <param name="title">Scenario title, used to name the trace archive.</param>
     public async Task StartTracingAsync(string title)
     {
         _ = Directory.CreateDirectory(ArtifactDirectory.Traces);
@@ -54,6 +64,12 @@ public class PlaywrightDriver : IDisposable, IAsyncDisposable
         });
     }
 
+    /// <summary>
+    /// Stops the trace started by <see cref="StartTracingAsync"/> and keeps it only when
+    /// <paramref name="keepTrace"/> is <see langword="true"/>.
+    /// </summary>
+    /// <param name="keepTrace">Keep the archive (a failing scenario) or delete it.</param>
+    /// <returns>The archive path when it was kept; otherwise <see langword="null"/>.</returns>
     public async Task<string?> StopTracingAsync(bool keepTrace)
     {
         if (_tracePath is null)
@@ -82,6 +98,9 @@ public class PlaywrightDriver : IDisposable, IAsyncDisposable
         return safeName.Length > 80 ? safeName[..80] : safeName;
     }
 
+    /// <summary>Takes a full-page screenshot into the artifact directory.</summary>
+    /// <param name="fileName">File name without the extension.</param>
+    /// <returns>The path of the written PNG.</returns>
     public async Task<string> TakeScreenshotAsPathAsync(string fileName)
     {
         _ = Directory.CreateDirectory(ArtifactDirectory.Screenshots);

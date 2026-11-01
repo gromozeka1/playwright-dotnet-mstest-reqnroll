@@ -107,7 +107,7 @@ which fails to load next to MSTest 4.x. Unit tests cover the warning, the once-p
 opt-out and both directions of the attribute check; the packaged README points at Reqnroll's
 `addNonParallelizableMarkerForTags` for tag-scoped exclusions.
 
-### 4. There is no guard against accidental breaking changes **[contract]**
+### 4. There is no guard against accidental breaking changes **[contract]** — ✅ done
 A public surface of roughly fifty members, a semver policy in the README and CHANGELOG ("a binding signature, config-shape or
 tag-vocabulary change is at least a minor bump") — all enforced by review discipline alone. A
 published version can be unlisted but never deleted, so a break that ships stays shipped.
@@ -124,7 +124,14 @@ The build then fails on an incompatible public API change, in the same run that 
 Adding `Microsoft.CodeAnalysis.PublicApiAnalyzers` with a committed `PublicAPI.Shipped.txt` makes the
 public surface visible in review as well.
 
-### 5. The symbol package has no source link
+**Done in 0.1.0-preview.7.** Package validation is on with the baseline at `0.1.0-preview.2`. Checked
+by packing against `0.1.0-preview.1`, where it failed with CP0001/CP0002 for every member preview.2
+had removed — the gate is real, not decorative. `PublicApiAnalyzers` was not added: package
+validation already fails the build on a break, and the analyzer only adds review visibility; revisit
+if the surface grows beyond what a reviewer can hold in their head. Bump
+`PackageValidationBaselineVersion` whenever a version is published.
+
+### 5. The symbol package has no source link — ✅ done
 `IncludeSymbols`/`SymbolPackageFormat` produce a `.snupkg`, but `PublishRepositoryUrl` and SourceLink
 are unset, so a consumer stepping into the package gets no source navigation — the symbol package is
 mostly inert.
@@ -132,6 +139,9 @@ mostly inert.
 **Suggestion:** `PublishRepositoryUrl`, `EmbedUntrackedSources` and
 `Microsoft.SourceLink.GitHub` (PrivateAssets=all). Cheap, and it makes the `RepositoryUrl` already in
 the csproj actually useful.
+
+**Done in 0.1.0-preview.7.** All three properties/package are in place; the packed nuspec now carries
+the source commit and branch, and the `.snupkg` PDB gets the source-link map.
 
 ---
 
@@ -238,12 +248,16 @@ will happen again: the package sits on a chain of transitive dependencies it doe
 
 ## ⚪ Packaging & docs
 
-### 15. No XML documentation on a public package
+### 15. No XML documentation on a public package — ✅ done
 `GenerateDocumentationFile` is off, so the public API ships without IntelliSense or nuget.org
 API docs — for a package whose whole purpose is to be consumed.
 
 **Suggestion:** enable it, document the public surface as it is touched, and let the compiler flag
 undocumented members in new code.
+
+**Done in 0.1.0-preview.7.** `GenerateDocumentationFile` is on, every public and protected member is
+documented, `HardPoint.Testing.xml` is inside the `.nupkg`, and CS1591 is promoted to an error so an
+undocumented new member fails the build rather than becoming a warning nobody reads.
 
 ### 16. No compatibility matrix
 A consumer has to read `Directory.Packages.props` to discover that this version pairs with
@@ -274,8 +288,6 @@ minimum: package reference, `appsettings.json`, one hooks class, one page object
 
 ## Suggested order of attack
 
-1. **Items 4, 5, 15** — packaging hygiene: API-compat baseline, SourceLink, XML docs. Do them together
-   before `1.0.0`, when the baseline is cheapest to establish.
-2. **Items 7, 11** — make traces deliberate and reachable from the report.
-3. **Items 12, 13, 14** — verification: browser matrix, coverage floor, dependency scanning.
-4. **Items 9, 10, 16, 17** — ergonomics and docs, as consumers ask for them.
+1. **Items 7, 11** — make traces deliberate and reachable from the report.
+2. **Items 12, 13, 14** — verification: browser matrix, coverage floor, dependency scanning.
+3. **Items 9, 10, 16, 17** — ergonomics and docs, as consumers ask for them.

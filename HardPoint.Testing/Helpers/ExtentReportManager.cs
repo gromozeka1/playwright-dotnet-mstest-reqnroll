@@ -9,6 +9,10 @@ using Reqnroll;
 
 namespace HardPoint.Testing.Helpers;
 
+/// <summary>
+/// The per-run Extent HTML report: one block per feature, one node per scenario, serialised
+/// behind a single lock so parallel scenarios can share it.
+/// </summary>
 public class ExtentReportManager : IDisposable
 {
     // The reporter and the per-feature nodes are shared by every scenario of the run,
@@ -22,6 +26,7 @@ public class ExtentReportManager : IDisposable
     private ExtentTest? _scenario;
     private bool _disposedValue;
 
+    /// <summary>Wires the shared reporter to <c>TestReports.html</c> in the artifact directory.</summary>
     public ExtentReportManager()
     {
         lock (_reportLock)
@@ -44,6 +49,7 @@ public class ExtentReportManager : IDisposable
         return _extentReports;
     }
 
+    /// <summary>Creates (or reuses) the feature block and opens this scenario's node in it.</summary>
     public void StartReportScenario(FeatureContext featureContext, ScenarioContext scenarioContext)
     {
         lock (_reportLock)
@@ -60,6 +66,10 @@ public class ExtentReportManager : IDisposable
         }
     }
 
+    /// <summary>
+    /// Adds the finished step to the scenario's node; a failed <c>@ui</c> step also gets a
+    /// screenshot.
+    /// </summary>
     public async Task ReportStep(PlaywrightDriver playwrightDriver,
                                  FeatureContext featureContext,
                                  ScenarioContext scenarioContext)
@@ -87,6 +97,8 @@ public class ExtentReportManager : IDisposable
         });
     }
 
+    /// <summary>Flushes the report once, under the same lock that guards node creation.</summary>
+    /// <param name="disposing">Whether managed resources are being disposed.</param>
     protected virtual void Dispose(bool disposing)
     {
         if (!_disposedValue)
@@ -105,6 +117,7 @@ public class ExtentReportManager : IDisposable
         }
     }
 
+    /// <summary>Flushes the report to <c>TestReports.html</c>.</summary>
     public void Dispose()
     {
         // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method

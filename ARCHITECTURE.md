@@ -174,13 +174,23 @@ The smoke project must keep covering the *package surface*, not grow into a seco
 
 `dotnet pack HardPoint.Testing/HardPoint.Testing.csproj -c Release -o artifacts` produces
 `HardPoint.Testing.<version>.nupkg` plus a `.snupkg`, with the readme, licence expression
-(MIT — no `LICENSE` file needed), repository link and the three dependencies.
+(MIT — no `LICENSE` file needed), repository link, XML documentation for the public API, and the
+three dependencies.
 
 - Semantic versioning, [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format in
   [CHANGELOG.md](CHANGELOG.md).
 - **Any** change to a binding signature, the configuration shape or the tag vocabulary is **at least
   a minor bump**. Patches otherwise.
-- Versions stay prerelease until a consumer proves the API. Current: `0.1.0-preview.6`.
+- **Package validation** compares the packed API with the last published release
+  (`PackageValidationBaselineVersion`, currently `0.1.0-preview.2`). Removing or changing a public
+  member fails `dotnet pack` with CP0001/CP0002, so a break cannot ship unnoticed. `AssemblyVersion`
+  is pinned to `0.1.0.0` so the local smoke pack (`0.0.0-smoke`) validates against the same baseline;
+  bump it with the first release of a new line, and bump the baseline when a version is published.
+- **SourceLink** (`PublishRepositoryUrl`, `EmbedUntrackedSources`) stamps the commit into the nuspec
+  and the PDB, so a consumer stepping into the package navigates to the tagged source.
+- **XML documentation** (`GenerateDocumentationFile`) ships `HardPoint.Testing.xml`; an undocumented
+  public member is a build failure (CS1591 promoted to an error), not a warning nobody reads.
+- Versions stay prerelease until a consumer proves the API. Current: `0.1.0-preview.7`.
 - When a config key, tag or binding changes, update `HardPoint.Testing/README.md` in the same change
   — it ships inside the package.
 

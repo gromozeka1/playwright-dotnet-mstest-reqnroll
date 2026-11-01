@@ -3,14 +3,25 @@ using Microsoft.Playwright;
 
 namespace HardPoint.Testing.Config;
 
+/// <summary>
+/// The configuration contract read from <c>appsettings.json</c> (or <c>appsettings.CI.json</c> when
+/// <c>CI</c> is set) by <see cref="ConfigReader"/>, plus the <c>TEST_</c>-prefixed environment
+/// overrides.
+/// </summary>
 public class TestSettings
 {
+    /// <summary>
+    /// The browser engine: <c>chromium</c>, <c>firefox</c> or <c>webkit</c>. Required, validated
+    /// when the file is read.
+    /// </summary>
     [JsonPropertyName("browserType")]
     public required string BrowserType { get; set; }
 
+    /// <summary>The URL opened before each <c>@ui</c> scenario. Required.</summary>
     [JsonPropertyName("applicationUrl")]
     public required string ApplicationUrl { get; set; }
 
+    /// <summary>Passed to <c>IBrowserType.LaunchAsync</c>.</summary>
     [JsonPropertyName("browserOptions")]
     public BrowserTypeLaunchOptions BrowserTypeLaunchOptions { get; set; } = new();
 
@@ -22,6 +33,7 @@ public class TestSettings
     [JsonPropertyName("browserContextOptions")]
     public BrowserNewContextOptions BrowserContextOptions { get; set; } = new();
 
+    /// <summary>Passed to <c>IAPIRequest.NewContextAsync</c>.</summary>
     [JsonPropertyName("apiOptions")]
     public APIRequestNewContextOptions APIRequestNewContextOptions { get; set; } = new();
 

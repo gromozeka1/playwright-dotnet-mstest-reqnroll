@@ -7,6 +7,12 @@ using Microsoft.Playwright;
 
 namespace HardPoint.Testing.Config;
 
+/// <summary>
+/// Reads <see cref="TestSettings"/> from <c>appsettings.json</c> (or <c>appsettings.CI.json</c>
+/// when <c>CI</c> is <c>true</c> or <c>1</c>) in the test output directory, applies the
+/// <c>TEST_</c>-prefixed environment overrides, and validates the result. A missing or malformed
+/// file fails with the resolved path and the remedy.
+/// </summary>
 public static class ConfigReader
 {
     private const string _environmentPrefix = "TEST_";
@@ -26,6 +32,10 @@ public static class ConfigReader
     // as the exception raised below, instead of a TypeInitializationException that hides it.
     private static Lazy<TestSettings> _settings = new(ReadConfig);
 
+    /// <summary>
+    /// The settings of the current run, read on first access. Replacing the value (as the unit
+    /// tests do) bypasses the file; <see cref="Reload"/> returns to reading it.
+    /// </summary>
     public static TestSettings Settings
     {
         get => _settings.Value;
