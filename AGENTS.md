@@ -96,7 +96,8 @@ These are public API; changing them affects every consumer:
   typo never reaches the driver mid-scenario; `enforceScenarioTags`
   defaults to `false` so the package imposes no tagging policy; `warnOnSerialExecution`
   (default `true`) writes a one-time warning when the test assembly declares no
-  `[assembly: Parallelize]`; `outputDirectory` routes the
+  `[assembly: Parallelize]`; `trace` is `off`, `on` or `retain-on-failure` (default);
+  `outputDirectory` routes the
   report, traces, screenshots and HAR files (empty means the test output directory);
   `browserContextOptions` is passed to `IBrowser.NewContextAsync` (storage state, headers,
   viewport, locale, time zone, permissions, base URL…), copied per context;
@@ -106,8 +107,9 @@ These are public API; changing them affects every consumer:
   consuming test assembly; the package cannot do it for them, but it warns once when it is
   missing.
 - **Artifacts.** `TestReports.html` at the artifact root, `traces/` per failed `@ui`
-  scenario, `screenshots/` for report attachments, `sut-*.har` per browser context
-  (skipped when `harOptions.recordHar` is `false`).
+  scenario (or every scenario under `trace: on`), `screenshots/` for report attachments,
+  `sut-*.har` per browser context (skipped when `harOptions.recordHar` is `false`). A failed
+  scenario's report node names its trace and HAR.
 
 ---
 

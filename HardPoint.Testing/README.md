@@ -38,6 +38,7 @@ Copy both with `CopyToOutputDirectory=PreserveNewest`.
   "applicationUrl": "http://localhost:5168",
   "enforceScenarioTags": false,
   "warnOnSerialExecution": true,
+  "trace": "retain-on-failure",
   "outputDirectory": "",
   "browserOptions": { "headless": true },
   "browserContextOptions": { "storageStatePath": "auth/state.json", "locale": "en-GB" },
@@ -52,6 +53,7 @@ Copy both with `CopyToOutputDirectory=PreserveNewest`.
 | `applicationUrl` | URL opened before each `@ui` scenario. Required. |
 | `enforceScenarioTags` | Reject a scenario that has no test-type tag (`@ui`/`@api`) or no environment tag, before it runs. Default `false`, so the package imposes no tagging policy unless you ask for it. |
 | `warnOnSerialExecution` | Write a one-time warning when the test assembly declares no `[assembly: Parallelize]`, because the suite would otherwise run serially while still passing. Default `true`; set `false` for a deliberately serial suite. |
+| `trace` | When to record a Playwright trace for `@ui` scenarios: `off`, `on` (always keep), or `retain-on-failure` (default). `off` makes local runs faster; the archive is for debugging failures. |
 | `outputDirectory` | Directory for `TestReports.html`, `traces/`, `screenshots/` and `sut-*.har`. Empty means the test output directory; a relative path resolves against it. |
 | `browserOptions` | Passed to `IBrowserType.LaunchAsync`. |
 | `browserContextOptions` | Passed to `IBrowser.NewContextAsync`: `storageStatePath`, `extraHTTPHeaders`, `viewportSize`, `locale`, `timezoneId`, `permissions`, `baseURL`, `ignoreHTTPSErrors` and the rest of Playwright's context surface. The framework still owns the HAR path and filter (`harOptions`); with `harOptions.recordHar: false` a HAR you configured here is left alone. |
@@ -95,7 +97,8 @@ A missing or malformed file fails with a message naming the resolved path and th
 ## Artifacts
 
 `TestReports.html` is written to the artifact directory at the end of the run. `traces/`
-holds a Playwright trace archive per failed `@ui` scenario; open one with
-`playwright show-trace <file>.zip`. `screenshots/` holds screenshots attached to the report.
+holds a Playwright trace archive per failed `@ui` scenario (or per scenario when `trace` is `on`);
+open one with `playwright show-trace <file>.zip`. A failed scenario's report node names its trace
+and HAR files. `screenshots/` holds screenshots attached to the report.
 `sut-*.har` holds one archive per browser context, unless `harOptions.recordHar` is `false`.
 `ArtifactDirectory` is public if your own hooks need the same paths.

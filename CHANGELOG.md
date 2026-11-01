@@ -5,6 +5,23 @@ All notable changes to `HardPoint.Testing` are recorded here. The format follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Any change to a binding
 signature, the configuration shape or the tag vocabulary is at least a minor bump.
 
+## [0.1.0-preview.8] - 2026-11-01
+
+### Added
+
+- `trace` setting with Playwright's familiar values: `off` (record nothing), `on` (always keep)
+  and `retain-on-failure` (default, the previous behaviour). `off` stops paying the recording cost
+  on every green run.
+- A failed `@ui` scenario's report node now names its trace archive and HAR file
+  (`ExtentReportManager.AttachArtifact`), so `TestReports.html` points at the artifacts instead of
+  leaving them to be found in the output directory. `PlaywrightDriver.HarPath` exposes the archive
+  path for consumers with a report of their own.
+
+### Changed
+
+- `BaseHook.SaveTraceOnFailure` honours the `trace` setting (keeping the archive for `on` or a
+  failure) and names the artifacts in the report. Its signature is unchanged.
+
 ## [0.1.0-preview.7] - 2026-11-01
 
 ### Added

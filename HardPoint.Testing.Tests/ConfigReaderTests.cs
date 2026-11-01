@@ -195,6 +195,36 @@ public sealed class ConfigReaderTests
     }
 
     [TestMethod]
+    public void TraceDefaultsToRetainOnFailure()
+    {
+        ConfigureTempConfigFile();
+
+        Assert.AreEqual(TraceMode.RetainOnFailure, ConfigReader.Settings.Trace);
+    }
+
+    [TestMethod]
+    [DataRow("off", TraceMode.Off)]
+    [DataRow("on", TraceMode.On)]
+    [DataRow("retain-on-failure", TraceMode.RetainOnFailure)]
+    public void TraceIsReadFromTheConfigFile(string configured, TraceMode expected)
+    {
+        ConfigureTempConfigFile("trace.json", CreateTraceConfig(configured));
+
+        Assert.AreEqual(expected, ConfigReader.Settings.Trace);
+    }
+
+    [TestMethod]
+    public void UnknownTraceModeFailsWithPathAndKey()
+    {
+        var configPath = ConfigureTempConfigFile("trace.json", CreateTraceConfig("sometimes"));
+
+        var exception = Assert.ThrowsExactly<InvalidOperationException>(() => _ = ConfigReader.Settings);
+
+        StringAssert.Contains(exception.Message, configPath);
+        StringAssert.Contains(exception.Message, "trace");
+    }
+
+    [TestMethod]
     public void BrowserContextOptionsAreReadFromTheConfigFile()
     {
         ConfigureTempConfigFile("context.json", CreateContextConfig());
@@ -306,6 +336,14 @@ public sealed class ConfigReaderTests
             "recordHar": {{(recordHar ? "true" : "false")}},
             "urlFilter": "{{urlFilter}}"
           }
+        }
+        """;
+
+    private static string CreateTraceConfig(string trace) => $$"""
+        {
+          "browserType": "chromium",
+          "applicationUrl": "http://localhost:5168",
+          "trace": "{{trace}}"
         }
         """;
 

@@ -24,6 +24,7 @@ public class ExtentReportManager : IDisposable
     private static ExtentReports? _extentReports;
 
     private ExtentTest? _scenario;
+    private ExtentTest? _artifacts;
     private bool _disposedValue;
 
     /// <summary>Wires the shared reporter to <c>TestReports.html</c> in the artifact directory.</summary>
@@ -63,6 +64,28 @@ public class ExtentReportManager : IDisposable
             }
 
             _scenario = feature.CreateNode<Scenario>(scenarioContext.ScenarioInfo.Title);
+        }
+    }
+
+    /// <summary>
+    /// Adds a labelled artifact path (trace, HAR) to the current scenario node, so the report points
+    /// at every file a failure produced.
+    /// </summary>
+    /// <param name="label">Short artifact name, for example <c>Trace</c>.</param>
+    /// <param name="path">Path of the artifact.</param>
+    public void AttachArtifact(string label, string path)
+    {
+        lock (_reportLock)
+        {
+            if (_scenario is null)
+            {
+                return;
+            }
+
+            // The Spark template renders log entries on Gherkin step nodes, not on the scenario
+            // node itself, so the artifacts live on one synthetic "Artifacts" step per scenario.
+            _artifacts ??= _scenario.CreateNode(new GherkinKeyword("And"), "Artifacts");
+            _ = _artifacts.Info($"{label}: {path}");
         }
     }
 

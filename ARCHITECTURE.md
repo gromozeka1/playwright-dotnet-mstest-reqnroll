@@ -23,8 +23,8 @@ documentation, not notes.
 
 | Project | Type | Notes |
 |---|---|---|
-| `HardPoint.Testing/` | Packable class library (`net10.0`) | The package itself — 9 source files |
-| `HardPoint.Testing.Tests/` | MSTest | 38 unit tests: configuration reading (including `browserType` validation), artifact-path resolution, the browser-context options the driver builds and the parallelism warning |
+| `HardPoint.Testing/` | Packable class library (`net10.0`) | The package itself — 10 source files |
+| `HardPoint.Testing.Tests/` | MSTest | 49 unit tests: configuration reading (including `browserType` validation and the trace mode), artifact-path resolution, the browser-context options the driver builds and the parallelism warning |
 | `HardPoint.Testing.SmokeTests/` | MSTest + Reqnroll | One real browser scenario against the **packed** package — **outside `TestAutomation.slnx`**, because it needs the `artifacts-smoke/` feed |
 
 Solution `TestAutomation.slnx`; .NET 10 pinned by `global.json`. Dependencies:
@@ -42,6 +42,7 @@ of the smoke project).
 | `Config/ConfigReader.cs` | Reads `TestSettings` from JSON with `TEST_` environment overrides |
 | `Config/TestSettings.cs` | The settings shape (Playwright launch/API-context option types) |
 | `Config/HarOptions.cs` | The HAR archive switch and URL filter (`harOptions`) |
+| `Config/TraceMode.cs` | `off` / `on` / `retain-on-failure` for Playwright tracing |
 | `Helpers/ExtentReportManager.cs` | Thread-safe single HTML report, feature nodes cached by title |
 | `Helpers/ArtifactDirectory.cs` | Single artifact root routed by `outputDirectory` |
 | `Constants/ScenarioTags.cs` | `@ui`/`@api` plus the environment tag vocabulary |
@@ -55,10 +56,11 @@ Reqnroll DI resolves PlaywrightDriver (one per scenario)
   ├─ BeforeScenario  Order = int.MinValue + 1  WarnWhenParallelismIsNotConfigured  (once, if no attribute)
   ├─ BeforeScenario  Order = 10            StartReportScenario           (always)
   ├─ BeforeScenario  Order = 20            OpenApplication               (@ui only → applicationUrl)
-  │                                         + tracing started            (@ui only)
+  │                                         + tracing started            (@ui only, unless trace: off)
   ├─ AfterStep                             ReportStep                    (always)
   ├─ AfterScenario                         AttachScreenshotOnFailure     (@ui only, failure only)
-  │                                         + trace kept only on failure
+  │                                         + trace kept per `trace`
+  │                                         + trace/HAR named in the report (failure)
   └─ AfterTestRun   (static)               flush report, dispose driver
 ```
 
@@ -81,6 +83,7 @@ copy both with `CopyToOutputDirectory=PreserveNewest`.
   "applicationUrl": "http://localhost:5168",
   "enforceScenarioTags": false,
   "warnOnSerialExecution": true,
+  "trace": "retain-on-failure",
   "outputDirectory": "",
   "browserOptions": { "headless": true },
   "browserContextOptions": { "storageStatePath": "auth/state.json", "locale": "en-GB" },
@@ -95,6 +98,7 @@ copy both with `CopyToOutputDirectory=PreserveNewest`.
 | `applicationUrl` | Opened before each `@ui` scenario — **required** |
 | `enforceScenarioTags` | Reject a scenario missing a test-type tag or environment tag before it runs. Default **`false`**: the package imposes no tagging policy unless asked |
 | `warnOnSerialExecution` | Warn once when the test assembly declares no `[assembly: Parallelize]` — the suite would otherwise run serially and still pass. Default **`true`**; `false` for a deliberately serial suite |
+| `trace` | `off`, `on` (always keep) or `retain-on-failure` (default) — when a Playwright trace is recorded for `@ui` scenarios |
 | `outputDirectory` | Root for report/traces/screenshots/HAR. Empty = test output directory; relative resolves against it |
 | `browserOptions` | Passed to `IBrowserType.LaunchAsync` |
 | `browserContextOptions` | Passed to `IBrowser.NewContextAsync` (storage state, headers, viewport, locale, time zone, permissions, base URL…). Copied per context; the framework still overrides the HAR path and filter |
@@ -135,11 +139,13 @@ still going green** — which is exactly what the smoke project exists to catch.
 | Path (under the artifact root) | Contents |
 |---|---|
 | `TestReports.html` | The Extent HTML report, one block per feature |
-| `traces/` | `{scenario-title}-{id}.zip` per **failed** `@ui` scenario; passing traces are deleted |
+| `traces/` | `{scenario-title}-{id}.zip` per **failed** `@ui` scenario under `retain-on-failure`, or per scenario under `trace: on`; deleted otherwise |
 | `screenshots/` | Screenshots attached to report steps |
 | `sut-*.har` | One HAR archive per browser context, unless `harOptions.recordHar` is `false` |
 
-`ArtifactDirectory` is public so consumer hooks can resolve the same paths.
+`ArtifactDirectory` is public so consumer hooks can resolve the same paths. A failed scenario's
+report node names its trace archive and HAR file, so the artifacts are reachable from
+`TestReports.html` instead of only from the output directory.
 
 ## 7. Dev loop with the consumer
 
@@ -190,7 +196,7 @@ three dependencies.
   and the PDB, so a consumer stepping into the package navigates to the tagged source.
 - **XML documentation** (`GenerateDocumentationFile`) ships `HardPoint.Testing.xml`; an undocumented
   public member is a build failure (CS1591 promoted to an error), not a warning nobody reads.
-- Versions stay prerelease until a consumer proves the API. Current: `0.1.0-preview.7`.
+- Versions stay prerelease until a consumer proves the API. Current: `0.1.0-preview.8`.
 - When a config key, tag or binding changes, update `HardPoint.Testing/README.md` in the same change
   — it ships inside the package.
 

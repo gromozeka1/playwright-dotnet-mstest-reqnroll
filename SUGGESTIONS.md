@@ -171,13 +171,18 @@ pass-through (storage state, headers, viewport, locale, time zone, permissions, 
 errors), the HAR precedence, the record-off escape hatch, the per-context copy, and config
 deserialisation including the `TEST_BrowserContextOptions__Locale` override.
 
-### 7. Every `@ui` scenario is traced, then the trace is thrown away
+### 7. Every `@ui` scenario is traced, then the trace is thrown away — ✅ done
 `OpenApplication` always calls `StartTracingAsync`; `StopTracingAsync(keep: false)` deletes the file
 when the scenario passes. Correct for debugging, but the recording cost is paid on every green run,
 which is most of them.
 
 **Suggestion:** a `trace` setting with Playwright's familiar semantics — `off`, `on`,
 `retain-on-failure` (default, current behaviour). Local runs get faster; CI keeps the artifact.
+
+**Done in 0.1.0-preview.8.** `TestSettings.Trace` is the `TraceMode` enum (`off`, `on`,
+`retain-on-failure`) read from the kebab-case JSON values; `OpenApplication` skips recording when it
+is `off`, and `BaseHook.KeepTrace` decides retention, unit-tested for all three modes on pass and
+fail. An unknown value fails when the configuration is read, like `browserType`.
 
 ### 8. A HAR is recorded for every context whether or not anyone wants it — ✅ done
 Same shape as item 7: unconditional recording costs disk and I/O, and the artifact only matters for
@@ -207,13 +212,18 @@ consuming suite's `ProductsApi` repeats the same `Content-Type` dictionary in fo
 response bodies to the report. That last part is what makes API failures debuggable from
 `TestReports.html` instead of from a stack trace.
 
-### 11. Failure artifacts never reach the report
+### 11. Failure artifacts never reach the report — ✅ done
 `AttachScreenshotOnFailure` attaches the screenshot, and `SaveTraceOnFailure` attaches the trace path
 to the Reqnroll output — but `TestReports.html`, the artifact CI uploads by default, shows neither the
 trace nor the HAR name. Anyone reading the report has to know to look in `traces/`.
 
 **Suggestion:** attach the trace path (and HAR file name) to the failing scenario node, as a link or
 a labelled entry. The report then points at every artifact for that scenario.
+
+**Done in 0.1.0-preview.8.** `ExtentReportManager.AttachArtifact(label, path)` writes a labelled
+entry on the scenario node; `BaseHook.SaveTraceOnFailure` uses it for the trace and, on failure, for
+`PlaywrightDriver.HarPath`. The smoke run was forced to fail once to confirm both lines appear in
+`TestReports.html`.
 
 ---
 
@@ -288,6 +298,5 @@ minimum: package reference, `appsettings.json`, one hooks class, one page object
 
 ## Suggested order of attack
 
-1. **Items 7, 11** — make traces deliberate and reachable from the report.
-2. **Items 12, 13, 14** — verification: browser matrix, coverage floor, dependency scanning.
-3. **Items 9, 10, 16, 17** — ergonomics and docs, as consumers ask for them.
+1. **Items 12, 13, 14** — verification: browser matrix, coverage floor, dependency scanning.
+2. **Items 9, 10, 16, 17** — ergonomics and docs, as consumers ask for them.

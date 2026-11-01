@@ -355,7 +355,7 @@ public static class ConfigReader
             PropertyNameCaseInsensitive = true
         };
 
-        jsonSerializerSettings.Converters.Add(new JsonStringEnumConverter());
+        jsonSerializerSettings.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.KebabCaseLower));
 
         return jsonSerializerSettings;
     }
