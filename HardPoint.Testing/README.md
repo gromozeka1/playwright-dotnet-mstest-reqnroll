@@ -12,7 +12,8 @@ pwsh bin/Debug/net10.0/playwright.ps1 install chromium
 ```
 
 The package depends on `Microsoft.Playwright`, `Reqnroll.MSTest` and `ExtentReports`.
-Target framework is `net10.0`.
+Target framework is `net10.0`. XML documentation and SourceLink ship with it, so IntelliSense and
+*Go to definition* land on the source for the exact version.
 
 ## What it provides
 

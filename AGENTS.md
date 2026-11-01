@@ -73,6 +73,10 @@ scenarios: the full behavioural suite still lives in `../hardpoint-tests`.
 - Package metadata (`PackageId`, `Version`, `PackageLicenseExpression`, readme, repository)
   lives in `HardPoint.Testing/HardPoint.Testing.csproj`. `HardPoint.Testing/README.md` is
   packed as the package readme — treat it as consumer documentation.
+- **Packaging hygiene.** The package ships XML documentation and SourceLink (commit stamped in the
+  nuspec/PDB), and `dotnet pack` runs package validation against `PackageValidationBaselineVersion`
+  (currently `0.1.0-preview.2`) — a removed or changed public member fails the pack. Bump the
+  baseline when a new version is published, and document every public member (CS1591 is an error).
 
 ---
 

@@ -5,6 +5,20 @@ All notable changes to `HardPoint.Testing` are recorded here. The format follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Any change to a binding
 signature, the configuration shape or the tag vocabulary is at least a minor bump.
 
+## [0.1.0-preview.7] - 2026-11-01
+
+### Added
+
+- The package ships XML documentation for its public API (`GenerateDocumentationFile`), so
+  consumers get IntelliSense and nuget.org API docs; a new public member without a doc comment is
+  a build failure (CS1591 promoted to an error).
+- Package validation compares the packed API with the last published release
+  (`0.1.0-preview.2`): removing or changing a public member now fails `dotnet pack` with
+  CP0001/CP0002 instead of shipping.
+- SourceLink (`PublishRepositoryUrl`, `EmbedUntrackedSources`): the nuspec carries the source
+  commit and the PDB gets source-link information, so stepping into the package navigates to the
+  code for that exact version.
+
 ## [0.1.0-preview.6] - 2026-11-01
 
 ### Added
