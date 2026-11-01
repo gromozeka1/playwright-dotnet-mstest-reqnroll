@@ -26,6 +26,9 @@ public abstract class BaseHook
     // it in every scenario's output would bury the message instead of surfacing it.
     private static int _parallelismWarningWritten;
 
+    // Captured by StartReportScenario for the failure hooks; the hook instance is per scenario.
+    private ExtentReportManager? _extentReportManager;
+
     /// <summary>
     /// Rejects a scenario that has no environment tag or no test-type tag, when
     /// <c>enforceScenarioTags</c> is on.
@@ -92,17 +95,24 @@ public abstract class BaseHook
     [BeforeScenario(Order = 10)]
     public void StartReportScenario(FeatureContext featureContext, ScenarioContext scenarioContext, ExtentReportManager extentReportManager)
     {
+        // Kept for the failure hooks: Reqnroll creates one hook instance per scenario, and adding
+        // the manager to SaveTraceOnFailure's signature would break the published public API.
+        _extentReportManager = extentReportManager;
         extentReportManager.StartReportScenario(featureContext, scenarioContext);
     }
 
     /// <summary>
-    /// Starts the scenario's trace and navigates to <c>applicationUrl</c>; runs for <c>@ui</c>
-    /// scenarios only.
+    /// Starts the scenario's trace (unless <c>trace</c> is <c>off</c>) and navigates to
+    /// <c>applicationUrl</c>; runs for <c>@ui</c> scenarios only.
     /// </summary>
     [BeforeScenario(ScenarioTags.UI, Order = 20)]
     public async Task OpenApplication(PlaywrightDriver playwrightDriver, ScenarioContext scenarioContext)
     {
-        await playwrightDriver.StartTracingAsync(scenarioContext.ScenarioInfo.Title);
+        if (ConfigReader.Settings.Trace != TraceMode.Off)
+        {
+            await playwrightDriver.StartTracingAsync(scenarioContext.ScenarioInfo.Title);
+        }
+
         IPage page = await playwrightDriver.GetPageAsync();
         await page.GotoAsync(ConfigReader.Settings.ApplicationUrl);
     }
@@ -114,17 +124,40 @@ public abstract class BaseHook
         await extentReportManager.ReportStep(playwrightDriver, featureContext, scenarioContext);
     }
 
-    /// <summary>Keeps the trace archive of a failed <c>@ui</c> scenario and attaches its path.</summary>
+    /// <summary>
+    /// Stops the trace and keeps it according to the <c>trace</c> setting, attaching the path to the
+    /// report and to the scenario output. A failed scenario also gets its HAR archive named in the
+    /// report.
+    /// </summary>
     [AfterScenario(ScenarioTags.UI)]
-    public async Task SaveTraceOnFailure(ScenarioContext scenarioContext, PlaywrightDriver playwrightDriver, IReqnrollOutputHelper output)
+    public async Task SaveTraceOnFailure(
+        ScenarioContext scenarioContext,
+        PlaywrightDriver playwrightDriver,
+        IReqnrollOutputHelper output)
     {
-        string? tracePath = await playwrightDriver.StopTracingAsync(scenarioContext.TestError is not null);
+        var keepTrace = KeepTrace(ConfigReader.Settings.Trace, scenarioContext.TestError is not null);
+        string? tracePath = await playwrightDriver.StopTracingAsync(keepTrace);
 
         if (tracePath is not null)
         {
             output.AddAttachment(tracePath);
+            _extentReportManager?.AttachArtifact("Trace", tracePath);
+        }
+
+        if (scenarioContext.TestError is not null && playwrightDriver.HarPath is { } harPath)
+        {
+            _extentReportManager?.AttachArtifact("HAR", harPath);
         }
     }
+
+    // Kept separate from the hook so the three modes are unit-tested without a browser.
+    internal static bool KeepTrace(TraceMode mode, bool failed)
+        => mode switch
+        {
+            TraceMode.On => true,
+            TraceMode.RetainOnFailure => failed,
+            _ => false,
+        };
 
     /// <summary>Attaches a screenshot when a <c>@ui</c> scenario failed.</summary>
     [AfterScenario(ScenarioTags.UI)]

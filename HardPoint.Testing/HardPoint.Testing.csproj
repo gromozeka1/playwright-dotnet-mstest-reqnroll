@@ -7,7 +7,7 @@
     <Nullable>enable</Nullable>
 
     <PackageId>HardPoint.Testing</PackageId>
-    <Version>0.1.0-preview.7</Version>
+    <Version>0.1.0-preview.8</Version>
     <!-- Package validation compares the assembly version with the baseline. Pinned to the 0.1
          line so the local smoke pack (0.0.0-smoke) validates against the same baseline as a
          release; bump it with the first release of a new line. -->

@@ -21,6 +21,7 @@ public class PlaywrightDriver : IDisposable, IAsyncDisposable
     private readonly Lazy<Task<IAPIRequestContext>> _apiRequestContext;
     private readonly TestSettings _testSettings = ConfigReader.Settings;
     private string? _tracePath;
+    private string? _harPath;
     private bool _disposedValue;
 
     /// <summary>Creates the driver from the current <see cref="ConfigReader.Settings"/>.</summary>
@@ -44,6 +45,12 @@ public class PlaywrightDriver : IDisposable, IAsyncDisposable
 
     /// <summary>The API request context, created on first access.</summary>
     public Task<IAPIRequestContext> ApiRequestContext => _apiRequestContext.Value;
+
+    /// <summary>
+    /// The HAR archive written for this scenario's browser context, or <see langword="null"/> when
+    /// recording is off. Useful for attaching the artifact to a report of your own.
+    /// </summary>
+    public string? HarPath => _harPath;
 
     /// <summary>
     /// Starts a Playwright trace for the scenario. The archive is kept only when
@@ -164,7 +171,8 @@ public class PlaywrightDriver : IDisposable, IAsyncDisposable
 
         // The framework wins on the archive so every HAR lands next to the report, whatever the
         // consumer configured, and the filter stays in one place (harOptions).
-        options.RecordHarPath = Path.Combine(ArtifactDirectory.Root, $"sut-{Guid.NewGuid():N}.har");
+        _harPath = Path.Combine(ArtifactDirectory.Root, $"sut-{Guid.NewGuid():N}.har");
+        options.RecordHarPath = _harPath;
         options.RecordHarUrlFilterString = string.IsNullOrWhiteSpace(harOptions.UrlFilter) ? null : harOptions.UrlFilter;
         options.RecordHarUrlFilter = null;
         options.RecordHarUrlFilterRegex = null;

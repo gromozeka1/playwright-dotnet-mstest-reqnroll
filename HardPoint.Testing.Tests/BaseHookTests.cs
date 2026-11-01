@@ -71,6 +71,16 @@ public sealed class BaseHookTests
     }
 
     [TestMethod]
+    [DataRow(TraceMode.Off, true, false)]
+    [DataRow(TraceMode.Off, false, false)]
+    [DataRow(TraceMode.On, true, true)]
+    [DataRow(TraceMode.On, false, true)]
+    [DataRow(TraceMode.RetainOnFailure, true, true)]
+    [DataRow(TraceMode.RetainOnFailure, false, false)]
+    public void KeepTraceFollowsTheTraceMode(TraceMode mode, bool failed, bool expected)
+        => Assert.AreEqual(expected, BaseHook.KeepTrace(mode, failed));
+
+    [TestMethod]
     public void DeclaresParallelizeIsFalseForAnAssemblyWithoutTheAttribute()
         => Assert.IsFalse(BaseHook.DeclaresParallelize(typeof(BaseHookTests).Assembly));
 

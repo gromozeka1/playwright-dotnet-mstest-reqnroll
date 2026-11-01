@@ -44,6 +44,14 @@ public class TestSettings
     public HarOptions HarOptions { get; set; } = new();
 
     /// <summary>
+    /// When a Playwright trace is recorded for <c>@ui</c> scenarios: <c>off</c>, <c>on</c>, or
+    /// <c>retain-on-failure</c> (default), which records every scenario and keeps the archive only
+    /// when it fails.
+    /// </summary>
+    [JsonPropertyName("trace")]
+    public TraceMode Trace { get; set; } = TraceMode.RetainOnFailure;
+
+    /// <summary>
     /// Rejects scenarios that are missing an environment tag or a test-type tag before they run.
     /// Off by default so the package does not impose a tagging policy on consumers.
     /// </summary>
