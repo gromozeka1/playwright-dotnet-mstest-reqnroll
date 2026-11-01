@@ -1,0 +1,24 @@
+name: Browser matrix
+
+# The package advertises chromium, firefox and webkit, but every push only proves chromium (the
+# smoke job). This runs the same packed-package scenario against all three engines on a schedule,
+# so a release cannot quietly break two thirds of the documented surface. Nightly rather than per
+# PR: three browser installs would triple the feedback time for every change.
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+    uses: ./.github/workflows/smoke.yml
+    with:
+      browser: ${{ matrix.browser }}

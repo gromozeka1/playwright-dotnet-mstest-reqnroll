@@ -1,4 +1,4 @@
-﻿# playwright-dotnet-mstest-reqnroll
+# playwright-dotnet-mstest-reqnroll
 
 Source of the **HardPoint.Testing** NuGet package: Playwright, MSTest and Reqnroll
 building blocks for a browser and API test suite. The package provides a per-scenario
@@ -46,6 +46,9 @@ dotnet test HardPoint.Testing.SmokeTests/HardPoint.Testing.SmokeTests.csproj -c 
 packed. `CI=true` selects `appsettings.CI.json` and runs headless, exactly as it does in a consumer;
 a local run is headed. Pack first: NuGet fails a restore outright when a configured folder source
 does not exist.
+
+CI additionally enforces a 55% line-coverage floor and a vulnerable-package scan on every push, and
+runs this same smoke scenario on chromium, firefox and webkit every night (`browser-matrix.yml`).
 
 ### Working against the consuming suite
 

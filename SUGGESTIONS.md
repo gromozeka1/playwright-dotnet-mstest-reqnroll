@@ -229,7 +229,7 @@ entry on the scenario node; `BaseHook.SaveTraceOnFailure` uses it for the trace 
 
 ## 🟢 Verification & CI
 
-### 12. Two of the three advertised browsers are never exercised
+### 12. Two of the three advertised browsers are never exercised — ✅ done
 `browserType` documents `chromium`, `firefox` and `webkit`; both workflows install and run
 **chromium only**. A release can break two thirds of the advertised surface and stay green.
 
@@ -237,7 +237,12 @@ entry on the scenario node; `BaseHook.SaveTraceOnFailure` uses it for the trace 
 smoke scenario against all three engines — the smoke project already exists for exactly this kind of
 "does the package work at all" check.
 
-### 13. No coverage, and the interesting half is untested
+**Done in 0.1.0-preview.9.** `browser-matrix.yml` calls `smoke.yml` for chromium, firefox and
+webkit at 03:00 UTC and on `workflow_dispatch`; `smoke.yml` takes a `browser` input and passes it
+through the documented `TEST_BrowserType` override, so no config file is rewritten. Verified
+locally by running the packed-package scenario on all three engines.
+
+### 13. No coverage, and the interesting half is untested — ✅ done
 The 14 unit tests cover `ConfigReader` and `ArtifactDirectory`. `BaseHook` (tag guard, hook ordering,
 screenshot-on-failure), `PlaywrightDriver` (lazy resources, ordered teardown, trace retention) and
 `ExtentReportManager` (locking, feature-node caching) have no direct tests; the smoke project proves
@@ -247,12 +252,23 @@ one happy path end to end and would not notice, say, a screenshot attached to *e
 the gaps in that order: driver teardown, screenshot-on-failure guard, report node caching, tag-guard
 messages.
 
-### 14. No dependency or security scanning
+**Done in 0.1.0-preview.9.** CI collects XPlat coverage and fails below a **55% line floor**; the
+suite grew to 55 tests. Closed: idempotent `PlaywrightDriver.DisposeAsync` (nothing started, called
+twice), tag-guard messages (extracted to `BaseHook.VerifyScenarioTags`), the report's no-op
+`AttachArtifact` before a scenario, and feature-node caching (`GetOrCreateFeature`). Still without a
+direct unit test: the screenshot-on-failure guard, because Reqnroll's `ScenarioContext` has no public
+constructor — it is exercised by the forced-failure smoke run but not asserted in CI. Raise the floor
+as more of `BaseHook`/`PlaywrightDriver` becomes testable.
+
+### 14. No dependency or security scanning — ✅ done
 The `System.Drawing.Common` advisory (GHSA-rxg9-xrhp-64gj) was found by hand and pinned by hand. That
 will happen again: the package sits on a chain of transitive dependencies it does not control.
 
 **Suggestion:** Dependabot for `nuget` and `github-actions`, plus a
 `dotnet list package --vulnerable --include-transitive` step in `dotnet.yml`.
+
+**Done in 0.1.0-preview.9.** `.github/dependabot.yml` covers both ecosystems weekly, and `dotnet.yml`
+runs the vulnerable-package scan on every push, failing when the output reports an advisory.
 
 ---
 
@@ -298,5 +314,4 @@ minimum: package reference, `appsettings.json`, one hooks class, one page object
 
 ## Suggested order of attack
 
-1. **Items 12, 13, 14** — verification: browser matrix, coverage floor, dependency scanning.
-2. **Items 9, 10, 16, 17** — ergonomics and docs, as consumers ask for them.
+1. **Items 9, 10, 16, 17** — ergonomics and docs, as consumers ask for them.

@@ -9,7 +9,7 @@ that is built on its own.
 | Project | Type | Description |
 |---|---|---|
 | `HardPoint.Testing/` | Class Library (packable) | The package: `PlaywrightDriver`, `BasePage`, `BaseHook`, `ConfigReader`/`TestSettings`, `ExtentReportManager`, `ArtifactDirectory`, `ScenarioTags`. Namespaces are `HardPoint.Testing.*`. |
-| `HardPoint.Testing.Tests/` | MSTest | Unit tests for configuration reading and artifact-path resolution. |
+| `HardPoint.Testing.Tests/` | MSTest | Unit tests for configuration, artifact paths, the driver's context options, the hook guards and the report |
 | `HardPoint.Testing.SmokeTests/` | MSTest + Reqnroll, not in `TestAutomation.slnx` | One Playwright scenario run against the packed package restored from `artifacts-smoke/`. |
 
 ### Dependency Flow & Isolation
@@ -60,6 +60,11 @@ dotnet test HardPoint.Testing.SmokeTests/HardPoint.Testing.SmokeTests.csproj -c 
 CI runs it in `.github/workflows/smoke.yml` on every push and pull request, and again before
 `publish.yml` pushes anything to nuget.org. Keep it covering the package surface, not the suite's
 scenarios: the full behavioural suite still lives in `../hardpoint-tests`.
+
+`dotnet.yml` also enforces a 55% line-coverage floor (`--collect:"XPlat Code Coverage"`) and a
+`dotnet list package --vulnerable --include-transitive` scan; `browser-matrix.yml` runs the smoke
+scenario nightly on chromium, firefox and webkit; Dependabot keeps the NuGet and Actions pins
+current. A change that drops coverage below the floor fails CI — raise the floor when a gap closes.
 
 ---
 

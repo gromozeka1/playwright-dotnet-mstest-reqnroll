@@ -165,6 +165,27 @@ public sealed class PlaywrightDriverTests
         return driver.CreateBrowserContextOptions();
     }
 
+    [TestMethod]
+    public async Task DisposeAsyncIsIdempotentAndStartsNothing()
+    {
+        ConfigReader.Settings = new TestSettings
+        {
+            BrowserType = "chromium",
+            ApplicationUrl = "http://localhost:5168",
+            OutputDirectory = _outputDirectory,
+        };
+
+        var driver = new PlaywrightDriver();
+
+        // No resource was ever created, so there is nothing to close: neither call may throw or
+        // start the browser.
+        await driver.DisposeAsync();
+        await driver.DisposeAsync();
+        driver.Dispose();
+
+        Assert.IsNull(driver.HarPath);
+    }
+
     private void AssertHarPathIsRoutedToArtifacts(string? harPath)
     {
         Assert.IsNotNull(harPath);

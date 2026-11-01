@@ -41,14 +41,18 @@ public abstract class BaseHook
             return;
         }
 
-        var scenarioTags = scenarioContext.ScenarioInfo.CombinedTags;
+        VerifyScenarioTags(scenarioContext.ScenarioInfo.CombinedTags);
+    }
 
-        if (!ScenarioTags.MandatoryEnvTags.Any(x => scenarioTags.Contains(x)))
+    // Kept separate from the hook so the messages are unit-tested without a Reqnroll context.
+    internal static void VerifyScenarioTags(IEnumerable<string> scenarioTags)
+    {
+        if (!ScenarioTags.MandatoryEnvTags.Any(scenarioTags.Contains))
         {
             throw new ArgumentException($"Scenario should contain at least one env tag: {string.Join(", ", ScenarioTags.MandatoryEnvTags)}");
         }
 
-        if (!ScenarioTags.MandatoryTestTypeTags.Any(x => scenarioTags.Contains(x)))
+        if (!ScenarioTags.MandatoryTestTypeTags.Any(scenarioTags.Contains))
         {
             throw new ArgumentException($"Scenario should contain at least one test type tag: {string.Join(", ", ScenarioTags.MandatoryTestTypeTags)}");
         }
