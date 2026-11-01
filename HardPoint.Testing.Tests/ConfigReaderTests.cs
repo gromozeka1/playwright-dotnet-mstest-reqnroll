@@ -13,6 +13,7 @@ public sealed class ConfigReaderTests
     private const string _headlessVariable = "TEST_Headless";
     private const string _apiBaseUrlVariable = "TEST_APIRequestNewContextOptions__BaseURL";
     private const string _harRecordVariable = "TEST_HarOptions__RecordHar";
+    private const string _contextLocaleVariable = "TEST_BrowserContextOptions__Locale";
     private const string _argsVariable = "TEST_Args";
     private const string _unknownVariable = "TEST_NotASetting";
     private const string _baseDirectoryConfigFile = "relative-config-test.json";
@@ -23,6 +24,7 @@ public sealed class ConfigReaderTests
         _headlessVariable,
         _apiBaseUrlVariable,
         _harRecordVariable,
+        _contextLocaleVariable,
         _argsVariable,
         _unknownVariable,
     ];
@@ -193,6 +195,39 @@ public sealed class ConfigReaderTests
     }
 
     [TestMethod]
+    public void BrowserContextOptionsAreReadFromTheConfigFile()
+    {
+        ConfigureTempConfigFile("context.json", CreateContextConfig());
+
+        var options = ConfigReader.Settings.BrowserContextOptions;
+
+        Assert.AreEqual("auth/state.json", options.StorageStatePath);
+        Assert.AreEqual("http://localhost:5168", options.BaseURL);
+        Assert.AreEqual("en-GB", options.Locale);
+        Assert.AreEqual("Europe/Warsaw", options.TimezoneId);
+        Assert.AreEqual(true, options.IgnoreHTTPSErrors);
+    }
+
+    [TestMethod]
+    public void BrowserContextOptionsDefaultToAnEmptyConfiguration()
+    {
+        ConfigureTempConfigFile();
+
+        Assert.IsNull(ConfigReader.Settings.BrowserContextOptions.Locale);
+        Assert.IsNull(ConfigReader.Settings.BrowserContextOptions.StorageStatePath);
+    }
+
+    [TestMethod]
+    public void BrowserContextOptionOverrideAppliesToNestedSetting()
+    {
+        ConfigureTempConfigFile("context-override.json", CreateContextConfig());
+        Environment.SetEnvironmentVariable(_contextLocaleVariable, "de-DE");
+        ConfigReader.Reload();
+
+        Assert.AreEqual("de-DE", ConfigReader.Settings.BrowserContextOptions.Locale);
+    }
+
+    [TestMethod]
     public void MalformedJsonThrowsWithPathInMessage()
     {
         var configPath = Path.Combine(_tempDirectory, "broken.json");
@@ -248,6 +283,20 @@ public sealed class ConfigReaderTests
 
         return configPath;
     }
+
+    private static string CreateContextConfig() => """
+        {
+          "browserType": "chromium",
+          "applicationUrl": "http://localhost:5168",
+          "browserContextOptions": {
+            "storageStatePath": "auth/state.json",
+            "baseURL": "http://localhost:5168",
+            "locale": "en-GB",
+            "timezoneId": "Europe/Warsaw",
+            "ignoreHTTPSErrors": true
+          }
+        }
+        """;
 
     private static string CreateHarConfig(bool recordHar = true, string urlFilter = "**/*") => $$"""
         {

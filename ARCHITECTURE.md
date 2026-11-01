@@ -24,7 +24,7 @@ documentation, not notes.
 | Project | Type | Notes |
 |---|---|---|
 | `HardPoint.Testing/` | Packable class library (`net10.0`) | The package itself — 9 source files |
-| `HardPoint.Testing.Tests/` | MSTest | 31 unit tests: configuration reading (including `browserType` validation), artifact-path resolution, the browser-context options the driver builds and the parallelism warning |
+| `HardPoint.Testing.Tests/` | MSTest | 38 unit tests: configuration reading (including `browserType` validation), artifact-path resolution, the browser-context options the driver builds and the parallelism warning |
 | `HardPoint.Testing.SmokeTests/` | MSTest + Reqnroll | One real browser scenario against the **packed** package — **outside `TestAutomation.slnx`**, because it needs the `artifacts-smoke/` feed |
 
 Solution `TestAutomation.slnx`; .NET 10 pinned by `global.json`. Dependencies:
@@ -63,10 +63,11 @@ Reqnroll DI resolves PlaywrightDriver (one per scenario)
 ```
 
 Resources are lazy: `@api` scenarios never launch a browser; the page and API context are created
-on first use. A browser context also starts a HAR recording, written next to the report and filtered
-by `harOptions` — never by a URL pattern belonging to one test suite. Disposal is asynchronous and
-ordered — page, context, browser, API context, driver — via `DisposeAsync()`; a synchronous
-`Dispose()` remains as an `IDisposable` adapter.
+on first use. A browser context starts from `browserContextOptions` — copied per scenario, because
+the framework writes the per-context HAR path into it — and always records a HAR next to the report,
+filtered by `harOptions` rather than by a URL pattern belonging to one test suite. Disposal is
+asynchronous and ordered — page, context, browser, API context, driver — via `DisposeAsync()`; a
+synchronous `Dispose()` remains as an `IDisposable` adapter.
 
 ## 4. Configuration contract
 
@@ -82,6 +83,7 @@ copy both with `CopyToOutputDirectory=PreserveNewest`.
   "warnOnSerialExecution": true,
   "outputDirectory": "",
   "browserOptions": { "headless": true },
+  "browserContextOptions": { "storageStatePath": "auth/state.json", "locale": "en-GB" },
   "apiOptions": { "BaseURL": "http://localhost:5044/api/", "IgnoreHTTPSErrors": true },
   "harOptions": { "recordHar": true, "urlFilter": "**/*" }
 }
@@ -95,6 +97,7 @@ copy both with `CopyToOutputDirectory=PreserveNewest`.
 | `warnOnSerialExecution` | Warn once when the test assembly declares no `[assembly: Parallelize]` — the suite would otherwise run serially and still pass. Default **`true`**; `false` for a deliberately serial suite |
 | `outputDirectory` | Root for report/traces/screenshots/HAR. Empty = test output directory; relative resolves against it |
 | `browserOptions` | Passed to `IBrowserType.LaunchAsync` |
+| `browserContextOptions` | Passed to `IBrowser.NewContextAsync` (storage state, headers, viewport, locale, time zone, permissions, base URL…). Copied per context; the framework still overrides the HAR path and filter |
 | `apiOptions` | Passed to `APIRequest.NewContextAsync` |
 | `harOptions` | HAR archive per browser context: `recordHar` (default `true`) turns recording off; `urlFilter` (default `**/*`) selects the recorded requests — empty also records every request |
 
@@ -177,7 +180,7 @@ The smoke project must keep covering the *package surface*, not grow into a seco
   [CHANGELOG.md](CHANGELOG.md).
 - **Any** change to a binding signature, the configuration shape or the tag vocabulary is **at least
   a minor bump**. Patches otherwise.
-- Versions stay prerelease until a consumer proves the API. Current: `0.1.0-preview.5`.
+- Versions stay prerelease until a consumer proves the API. Current: `0.1.0-preview.6`.
 - When a config key, tag or binding changes, update `HardPoint.Testing/README.md` in the same change
   — it ships inside the package.
 

@@ -39,6 +39,7 @@ Copy both with `CopyToOutputDirectory=PreserveNewest`.
   "warnOnSerialExecution": true,
   "outputDirectory": "",
   "browserOptions": { "headless": true },
+  "browserContextOptions": { "storageStatePath": "auth/state.json", "locale": "en-GB" },
   "apiOptions": { "BaseURL": "http://localhost:5044/api/", "IgnoreHTTPSErrors": true },
   "harOptions": { "recordHar": true, "urlFilter": "**/*" }
 }
@@ -52,9 +53,13 @@ Copy both with `CopyToOutputDirectory=PreserveNewest`.
 | `warnOnSerialExecution` | Write a one-time warning when the test assembly declares no `[assembly: Parallelize]`, because the suite would otherwise run serially while still passing. Default `true`; set `false` for a deliberately serial suite. |
 | `outputDirectory` | Directory for `TestReports.html`, `traces/`, `screenshots/` and `sut-*.har`. Empty means the test output directory; a relative path resolves against it. |
 | `browserOptions` | Passed to `IBrowserType.LaunchAsync`. |
+| `browserContextOptions` | Passed to `IBrowser.NewContextAsync`: `storageStatePath`, `extraHTTPHeaders`, `viewportSize`, `locale`, `timezoneId`, `permissions`, `baseURL`, `ignoreHTTPSErrors` and the rest of Playwright's context surface. The framework still owns the HAR path and filter (`harOptions`); with `harOptions.recordHar: false` a HAR you configured here is left alone. |
 | `apiOptions` | Passed to `APIRequest.NewContextAsync`. |
 | `harOptions.recordHar` | Record a HAR archive per browser context. Default `true`; `false` turns recording off. |
 | `harOptions.urlFilter` | Playwright glob or regex selecting the requests written to the archive. Default `**/*`, so the archive covers the whole application rather than one suite's URLs; an empty value also records every request. |
+
+To sign in once instead of per scenario, save Playwright's storage state and point
+`browserContextOptions.storageStatePath` at it; the package passes the path through unchanged.
 
 `TEST_`-prefixed environment variables override the file: `TEST_Headless=true` matches the
 `headless` key wherever it appears, and `TEST_APIRequestNewContextOptions__BaseURL=...`

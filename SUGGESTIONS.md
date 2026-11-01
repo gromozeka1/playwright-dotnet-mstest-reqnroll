@@ -137,7 +137,7 @@ the csproj actually useful.
 
 ## 🟡 Capability gaps
 
-### 6. Consumers cannot influence the browser context **[contract]**
+### 6. Consumers cannot influence the browser context **[contract]** — ✅ done
 `BrowserNewContextOptions` is constructed internally with the HAR path and nothing else, so there is
 no supported way to set `StorageStatePath`, `ExtraHTTPHeaders`, `ViewportSize`, `Locale`,
 `TimezoneId`, `Permissions`, `BaseURL` or `IgnoreHTTPSErrors`.
@@ -150,6 +150,16 @@ today it is unreachable without reflection or a parallel context.
 `BrowserNewContextOptions` and merged with the framework's own HAR settings (framework wins on the
 HAR path, so artifact routing stays consistent). Document it as pass-through, the way
 `browserOptions` and `apiOptions` already work.
+
+**Done in 0.1.0-preview.6.** `TestSettings.BrowserContextOptions` is deserialised from
+`browserContextOptions` and passed to `NewContextAsync`. `PlaywrightDriver` copies it per context
+(`BrowserNewContextOptions` has a copy constructor) before writing the per-context HAR path, so
+parallel scenarios cannot race on one shared instance. The framework still owns the archive: the
+path always routes to the artifact directory and the filter comes from `harOptions`; with
+`harOptions.recordHar: false` the consumer's own HAR configuration is left untouched. Tests cover
+pass-through (storage state, headers, viewport, locale, time zone, permissions, base URL, HTTPS
+errors), the HAR precedence, the record-off escape hatch, the per-context copy, and config
+deserialisation including the `TEST_BrowserContextOptions__Locale` override.
 
 ### 7. Every `@ui` scenario is traced, then the trace is thrown away
 `OpenApplication` always calls `StartTracingAsync`; `StopTracingAsync(keep: false)` deletes the file
@@ -264,9 +274,8 @@ minimum: package reference, `appsettings.json`, one hooks class, one page object
 
 ## Suggested order of attack
 
-1. **Item 6** (browser-context options) — unlocks authentication, the most likely next requirement.
-2. **Items 4, 5, 15** — packaging hygiene: API-compat baseline, SourceLink, XML docs. Do them together
+1. **Items 4, 5, 15** — packaging hygiene: API-compat baseline, SourceLink, XML docs. Do them together
    before `1.0.0`, when the baseline is cheapest to establish.
-3. **Items 7, 11** — make traces deliberate and reachable from the report.
-4. **Items 12, 13, 14** — verification: browser matrix, coverage floor, dependency scanning.
-5. **Items 9, 10, 16, 17** — ergonomics and docs, as consumers ask for them.
+2. **Items 7, 11** — make traces deliberate and reachable from the report.
+3. **Items 12, 13, 14** — verification: browser matrix, coverage floor, dependency scanning.
+4. **Items 9, 10, 16, 17** — ergonomics and docs, as consumers ask for them.
