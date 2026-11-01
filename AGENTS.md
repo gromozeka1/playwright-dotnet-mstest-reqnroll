@@ -63,7 +63,7 @@ scenarios: the full behavioural suite still lives in `../hardpoint-tests`.
 
 `dotnet.yml` also enforces a 55% line-coverage floor (`--collect:"XPlat Code Coverage"`) and a
 `dotnet list package --vulnerable --include-transitive` scan; `browser-matrix.yml` runs the smoke
-scenario nightly on chromium, firefox and webkit; Dependabot keeps the NuGet and Actions pins
+scenario weekly on chromium, firefox and webkit; Dependabot keeps the NuGet and Actions pins
 current. A change that drops coverage below the floor fails CI — raise the floor when a gap closes.
 
 ---

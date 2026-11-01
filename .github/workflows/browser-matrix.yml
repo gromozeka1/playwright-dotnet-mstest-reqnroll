@@ -1,13 +1,13 @@
 name: Browser matrix
 
 # The package advertises chromium, firefox and webkit, but every push only proves chromium (the
-# smoke job). This runs the same packed-package scenario against all three engines on a schedule,
-# so a release cannot quietly break two thirds of the documented surface. Nightly rather than per
+# smoke job). This runs the same packed-package scenario against all three engines once a week,
+# so a release cannot quietly break two thirds of the documented surface. Weekly rather than per
 # PR: three browser installs would triple the feedback time for every change.
 
 on:
   schedule:
-    - cron: "0 3 * * *"
+    - cron: "0 3 * * 1"
   workflow_dispatch:
 
 permissions:

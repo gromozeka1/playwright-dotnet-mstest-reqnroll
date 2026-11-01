@@ -233,14 +233,14 @@ entry on the scenario node; `BaseHook.SaveTraceOnFailure` uses it for the trace 
 `browserType` documents `chromium`, `firefox` and `webkit`; both workflows install and run
 **chromium only**. A release can break two thirds of the advertised surface and stay green.
 
-**Suggestion:** a nightly matrix job (not on every PR, to keep the feedback loop short) running the
+**Suggestion:** a scheduled matrix job (not on every PR, to keep the feedback loop short) running the
 smoke scenario against all three engines — the smoke project already exists for exactly this kind of
 "does the package work at all" check.
 
 **Done in 0.1.0-preview.9.** `browser-matrix.yml` calls `smoke.yml` for chromium, firefox and
-webkit at 03:00 UTC and on `workflow_dispatch`; `smoke.yml` takes a `browser` input and passes it
-through the documented `TEST_BrowserType` override, so no config file is rewritten. Verified
-locally by running the packed-package scenario on all three engines.
+webkit weekly (Mondays, 03:00 UTC) and on `workflow_dispatch`; `smoke.yml` takes a `browser` input
+and passes it through the documented `TEST_BrowserType` override, so no config file is rewritten.
+Verified locally by running the packed-package scenario on all three engines.
 
 ### 13. No coverage, and the interesting half is untested — ✅ done
 The 14 unit tests cover `ConfigReader` and `ArtifactDirectory`. `BaseHook` (tag guard, hook ordering,

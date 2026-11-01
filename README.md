@@ -48,7 +48,7 @@ a local run is headed. Pack first: NuGet fails a restore outright when a configu
 does not exist.
 
 CI additionally enforces a 55% line-coverage floor and a vulnerable-package scan on every push, and
-runs this same smoke scenario on chromium, firefox and webkit every night (`browser-matrix.yml`).
+runs this same smoke scenario on chromium, firefox and webkit every week (`browser-matrix.yml`).
 
 ### Working against the consuming suite
 

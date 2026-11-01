@@ -1,4 +1,4 @@
-﻿# playwright-dotnet-mstest-reqnroll — architecture
+# playwright-dotnet-mstest-reqnroll — architecture
 
 This repository builds the **`HardPoint.Testing`** NuGet package: Playwright, MSTest and Reqnroll
 building blocks for a browser and API test suite — a per-scenario driver, JSON configuration with
@@ -169,7 +169,7 @@ published version pinned in **its** `Directory.Packages.props` — bump that pin
 | Formatting gate | `dotnet format TestAutomation.slnx --verify-no-changes` | Style is CI-enforced |
 | Vulnerabilities | `dotnet list package --vulnerable --include-transitive` | No known advisory in the dependency chain |
 | Package smoke | `dotnet pack ... -p:Version=0.0.0-smoke -o artifacts-smoke` then `dotnet test HardPoint.Testing.SmokeTests/... -c Release` | **The `.nupkg` itself**: dependency completeness, driver launch, hook execution, report written |
-| Browser matrix | nightly `browser-matrix.yml` (chromium, firefox, webkit) | The three advertised engines, through the same packed-package scenario |
+| Browser matrix | weekly `browser-matrix.yml` (chromium, firefox, webkit) | The three advertised engines, through the same packed-package scenario |
 | Real consumer | the suite's 20 scenarios against the Docker SUT | End-to-end package behaviour |
 
 `0.0.0-smoke` is local-only so the restore can only resolve the package just packed. `CI=true`
@@ -229,7 +229,7 @@ can be unlisted but never deleted, so a broken package must not reach nuget.org.
 |---|---|---|
 | `dotnet.yml` | every push and PR | Restore, build, unit test with coverage (55% floor), `dotnet format --verify-no-changes`, vulnerability scan, pack, upload |
 | `smoke.yml` | every push and PR, and as a gate in `publish.yml` | Pack `0.0.0-smoke`, assert the `.nupkg` exists, restore the smoke project from it, install the requested browser via the package's own `playwright.ps1`, run the scenario, assert exactly one test ran and the report contains its title |
-| `browser-matrix.yml` | nightly (03:00 UTC) or `workflow_dispatch` | Calls `smoke.yml` for chromium, firefox and webkit, so two thirds of the documented surface cannot rot unnoticed |
+| `browser-matrix.yml` | weekly (Mondays, 03:00 UTC) or `workflow_dispatch` | Calls `smoke.yml` for chromium, firefox and webkit, so two thirds of the documented surface cannot rot unnoticed |
 | `publish.yml` | tag `v*` or `workflow_dispatch` | The release path in §10 |
 
 `smoke.yml` takes a `browser` input (default `chromium`) and passes it to the scenario as

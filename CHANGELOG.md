@@ -9,7 +9,7 @@ signature, the configuration shape or the tag vocabulary is at least a minor bum
 
 ### Added
 
-- Nightly browser matrix (`browser-matrix.yml`): the packed-package smoke scenario runs on
+- Weekly browser matrix (`browser-matrix.yml`): the packed-package smoke scenario runs on
   chromium, firefox and webkit, so the two advertised engines that were never exercised cannot rot
   unnoticed. `smoke.yml` gained a `browser` input, passed through the documented
   `TEST_BrowserType` override.
