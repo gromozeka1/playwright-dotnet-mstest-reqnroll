@@ -111,6 +111,9 @@ These are public API; changing them affects every consumer:
 - **Parallelism belongs to the consumer.** `[assembly: Parallelize]` must be declared in the
   consuming test assembly; the package cannot do it for them, but it warns once when it is
   missing.
+- **Ergonomics.** `BasePage` carries fill/select/load-state/row-scoped helpers and consumers can
+  always drop to raw Playwright through `GetPageAsync()`. `ApiClient` wraps JSON calls over the API
+  context and attaches request/response bodies to the report when a call fails.
 - **Artifacts.** `TestReports.html` at the artifact root, `traces/` per failed `@ui`
   scenario (or every scenario under `trace: on`), `screenshots/` for report attachments,
   `sut-*.har` per browser context (skipped when `harOptions.recordHar` is `false`). A failed

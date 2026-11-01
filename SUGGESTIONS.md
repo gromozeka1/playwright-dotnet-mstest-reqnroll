@@ -192,7 +192,7 @@ failures.
 
 **Done with item 1:** `harOptions.recordHar` and `harOptions.urlFilter` ship in 0.1.0-preview.3.
 
-### 9. `BasePage` stops just short of what page objects actually repeat
+### 9. `BasePage` stops just short of what page objects actually repeat — ✅ done
 The helpers (`LinkAsync`, `ButtonAsync`, `RowAsync`, `TextAsync`, `ClickLinkAsync`,
 `ClickButtonAsync`) cover clicks and locators, but every form interaction falls back to
 `(await GetPageAsync()).GetByLabel(...)`. That pattern is repeated in every method of both page
@@ -203,7 +203,11 @@ framework of its own — `FillAsync(label, value)`, `SelectAsync(label, value)`,
 `WaitForLoadStateAsync()`, and a scoped `RowAsync(name).GetByRole(...)` convenience. Keep the
 principle that consumers can always drop to raw Playwright.
 
-### 10. No conveniences for API scenarios
+**Done in 0.1.0-preview.10.** `FillAsync`, `SelectAsync`, `WaitForLoadStateAsync` and
+`InRowAsync(rowName, role, name)` added as protected helpers; the smoke scenario now types its note
+through `FillAsync` and waits through `WaitForLoadStateAsync`, so the packaged surface proves both.
+
+### 10. No conveniences for API scenarios — ✅ done
 `ApiRequestContext` is exposed raw, so consumers re-implement JSON headers and status handling; the
 consuming suite's `ProductsApi` repeats the same `Content-Type` dictionary in four methods.
 
@@ -211,6 +215,12 @@ consuming suite's `ProductsApi` repeats the same `Content-Type` dictionary in fo
 `GetJsonAsync<T>` — that sets JSON headers and, on a non-success status, attaches the request and
 response bodies to the report. That last part is what makes API failures debuggable from
 `TestReports.html` instead of from a stack trace.
+
+**Done in 0.1.0-preview.10.** `ApiClient` posts/puts a `DataObject` (Playwright serialises it as
+JSON), returns the response so callers assert the status, and deserialises `GetJsonAsync<T>`
+case-insensitively. A non-success call writes `METHOD url -> status; request: …; response: …` to the
+report through `AttachNote`, and `GetJsonAsync<T>` throws with the status and body. Covered by three
+tests against a loopback stub through a real Playwright API context (no browser needed).
 
 ### 11. Failure artifacts never reach the report — ✅ done
 `AttachScreenshotOnFailure` attaches the screenshot, and `SaveTraceOnFailure` attaches the trace path
@@ -285,7 +295,7 @@ undocumented members in new code.
 documented, `HardPoint.Testing.xml` is inside the `.nupkg`, and CS1591 is promoted to an error so an
 undocumented new member fails the build rather than becoming a warning nobody reads.
 
-### 16. No compatibility matrix
+### 16. No compatibility matrix — ✅ done
 A consumer has to read `Directory.Packages.props` to discover that this version pairs with
 Playwright 1.63.0, Reqnroll 3.3.4, MSTest 4.5.1 on `net10.0` — and that only **MSTest** is supported,
 not the NUnit/xUnit/TUnit flavours Reqnroll also offers.
@@ -293,13 +303,22 @@ not the NUnit/xUnit/TUnit flavours Reqnroll also offers.
 **Suggestion:** a table in the package README (version → dependency versions → runner), refreshed at
 release. It is the first thing a consumer checks and the last thing anyone remembers to update.
 
-### 17. The only usage example is private
+**Done in 0.1.0-preview.10.** The packaged README has a Compatibility table (version, Playwright,
+Reqnroll, MSTest, target) and states that only the MSTest flavour is supported. Refresh the row when
+the pinned versions change.
+
+### 17. The only usage example is private — ✅ done
 `HardPoint.Testing.SmokeTests` is an excellent example — it consumes the packed package, declares its
 own `Parallelize`, derives from `BaseHook` and runs a scenario — but it lives outside the solution and
 is never shown in the README. A newcomer's reference is the separate `hardpoint-tests` repository.
 
 **Suggestion:** a `samples/` quickstart (or a README walkthrough quoting the smoke project) showing the
 minimum: package reference, `appsettings.json`, one hooks class, one page object, one scenario.
+
+**Done in 0.1.0-preview.10.** The packaged README opens with a Quickstart: hooks class, page object,
+feature, minimal `appsettings.json` and an `ApiClient` alternative — and points at the smoke project as
+the working example. A separate `samples/` project was not added: it would be a second build to keep
+green for the same content.
 
 ---
 
@@ -314,4 +333,6 @@ minimum: package reference, `appsettings.json`, one hooks class, one page object
 
 ## Suggested order of attack
 
-1. **Items 9, 10, 16, 17** — ergonomics and docs, as consumers ask for them.
+Everything in this file is closed. The next review should start from the package's current gaps —
+the screenshot-on-failure guard still lacks a direct test, and the coverage floor is deliberately
+below the current number — rather than from this list.

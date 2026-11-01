@@ -18,6 +18,7 @@ public sealed class ExtentReportManagerTests
     {
         _outputDirectory = Path.Combine(Path.GetTempPath(), "extent-tests", Guid.NewGuid().ToString("N"));
         _ = Directory.CreateDirectory(_outputDirectory);
+        ExtentReportManager.ResetForTests();
         ConfigReader.Settings = new TestSettings
         {
             BrowserType = "chromium",

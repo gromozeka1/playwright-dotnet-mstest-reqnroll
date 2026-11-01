@@ -23,8 +23,8 @@ documentation, not notes.
 
 | Project | Type | Notes |
 |---|---|---|
-| `HardPoint.Testing/` | Packable class library (`net10.0`) | The package itself — 10 source files |
-| `HardPoint.Testing.Tests/` | MSTest | 55 unit tests: configuration reading (including `browserType` validation and the trace mode), artifact-path resolution, the browser-context options the driver builds and the parallelism warning |
+| `HardPoint.Testing/` | Packable class library (`net10.0`) | The package itself — 11 source files |
+| `HardPoint.Testing.Tests/` | MSTest | 58 unit tests: configuration, the driver's context options and disposal, hook guards, report caching and the API client |
 | `HardPoint.Testing.SmokeTests/` | MSTest + Reqnroll | One real browser scenario against the **packed** package — **outside `TestAutomation.slnx`**, because it needs the `artifacts-smoke/` feed |
 
 Solution `TestAutomation.slnx`; .NET 10 pinned by `global.json`. Dependencies:
@@ -38,7 +38,8 @@ of the smoke project).
 |---|---|
 | `Driver/PlaywrightDriver.cs` | One browser + one API request context per scenario; lazy creation, `GetPageAsync()`, tracing, screenshots, `DisposeAsync()` |
 | `Driver/BaseHook.cs` | The `[Binding]` every consumer derives from: tag guard, report node, `@ui` navigation, failure trace/screenshot, `[AfterTestRun]` disposal |
-| `Driver/BasePage.cs` | Page-object base with async ARIA-role locator and click helpers |
+| `Driver/BasePage.cs` | Page-object base with async ARIA-role locator, click, fill, select and row-scoped helpers |
+| `Api/ApiClient.cs` | JSON helpers over the API request context, attaching request/response bodies to the report on failure |
 | `Config/ConfigReader.cs` | Reads `TestSettings` from JSON with `TEST_` environment overrides |
 | `Config/TestSettings.cs` | The settings shape (Playwright launch/API-context option types) |
 | `Config/HarOptions.cs` | The HAR archive switch and URL filter (`harOptions`) |
@@ -198,7 +199,7 @@ three dependencies.
   and the PDB, so a consumer stepping into the package navigates to the tagged source.
 - **XML documentation** (`GenerateDocumentationFile`) ships `HardPoint.Testing.xml`; an undocumented
   public member is a build failure (CS1591 promoted to an error), not a warning nobody reads.
-- Versions stay prerelease until a consumer proves the API. Current: `0.1.0-preview.9`.
+- Versions stay prerelease until a consumer proves the API. Current: `0.1.0-preview.10`.
 - When a config key, tag or binding changes, update `HardPoint.Testing/README.md` in the same change
   — it ships inside the package.
 

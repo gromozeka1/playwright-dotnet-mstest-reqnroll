@@ -24,6 +24,22 @@ public abstract class BasePage(PlaywrightDriver playwrightDriver)
     protected async Task<ILocator> RowAsync(string name)
         => (await GetPageAsync()).GetByRole(AriaRole.Row, new() { Name = name });
 
+    /// <summary>The element with the given ARIA role and name inside the row with that name.</summary>
+    protected async Task<ILocator> InRowAsync(string rowName, AriaRole role, string name)
+        => (await RowAsync(rowName)).GetByRole(role, new() { Name = name });
+
+    /// <summary>Fills the field with the given label.</summary>
+    protected async Task FillAsync(string label, string value)
+        => await (await GetPageAsync()).GetByLabel(label).FillAsync(value);
+
+    /// <summary>Selects the option with the given value in the field with that label.</summary>
+    protected async Task SelectAsync(string label, string value)
+        => await (await GetPageAsync()).GetByLabel(label).SelectOptionAsync(value);
+
+    /// <summary>Waits until the page reaches the given load state (default: <c>load</c>).</summary>
+    protected async Task WaitForLoadStateAsync(LoadState state = LoadState.Load)
+        => await (await GetPageAsync()).WaitForLoadStateAsync(state);
+
     /// <summary>Clicks the link with the accessible name.</summary>
     protected async Task ClickLinkAsync(string name)
         => await (await LinkAsync(name)).ClickAsync();
