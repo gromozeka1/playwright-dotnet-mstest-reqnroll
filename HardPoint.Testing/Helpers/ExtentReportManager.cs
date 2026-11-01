@@ -56,15 +56,23 @@ public class ExtentReportManager : IDisposable
         lock (_reportLock)
         {
             var reporter = GetOrCreateReporter();
-
-            if (!_featuresByTitle.TryGetValue(featureContext.FeatureInfo.Title, out var feature))
-            {
-                feature = reporter.CreateTest<Feature>(featureContext.FeatureInfo.Title);
-                _featuresByTitle[featureContext.FeatureInfo.Title] = feature;
-            }
+            var feature = GetOrCreateFeature(reporter, featureContext.FeatureInfo.Title);
 
             _scenario = feature.CreateNode<Scenario>(scenarioContext.ScenarioInfo.Title);
         }
+    }
+
+    // One block per feature, shared by every scenario of the run; a per-scenario node duplicated
+    // every feature in the report.
+    internal static ExtentTest GetOrCreateFeature(ExtentReports reporter, string title)
+    {
+        if (!_featuresByTitle.TryGetValue(title, out var feature))
+        {
+            feature = reporter.CreateTest<Feature>(title);
+            _featuresByTitle[title] = feature;
+        }
+
+        return feature;
     }
 
     /// <summary>

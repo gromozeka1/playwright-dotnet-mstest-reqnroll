@@ -5,6 +5,20 @@ All notable changes to `HardPoint.Testing` are recorded here. The format follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Any change to a binding
 signature, the configuration shape or the tag vocabulary is at least a minor bump.
 
+## [0.1.0-preview.9] - 2026-11-01
+
+### Added
+
+- Weekly browser matrix (`browser-matrix.yml`): the packed-package smoke scenario runs on
+  chromium, firefox and webkit, so the two advertised engines that were never exercised cannot rot
+  unnoticed. `smoke.yml` gained a `browser` input, passed through the documented
+  `TEST_BrowserType` override.
+- Coverage collection in CI (`coverlet.collector`) with a 55% line floor for `HardPoint.Testing`,
+  plus tests for the tag guard, idempotent driver disposal, the report's no-op artifact attachment
+  and feature-node caching.
+- Dependabot for NuGet and GitHub Actions, and a
+  `dotnet list package --vulnerable --include-transitive` gate in `dotnet.yml`.
+
 ## [0.1.0-preview.8] - 2026-11-01
 
 ### Added

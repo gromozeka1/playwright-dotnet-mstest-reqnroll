@@ -81,6 +81,30 @@ public sealed class BaseHookTests
         => Assert.AreEqual(expected, BaseHook.KeepTrace(mode, failed));
 
     [TestMethod]
+    public void ScenarioWithBothTagTypesIsAccepted()
+        => BaseHook.VerifyScenarioTags(["ui", "local"]);
+
+    [TestMethod]
+    public void ScenarioWithoutAnEnvironmentTagIsRejectedWithTheAcceptedTags()
+    {
+        var exception = Assert.ThrowsExactly<ArgumentException>(() => BaseHook.VerifyScenarioTags(["ui"]));
+
+        StringAssert.Contains(exception.Message, "at least one env tag");
+        StringAssert.Contains(exception.Message, "local");
+        StringAssert.Contains(exception.Message, "prod");
+    }
+
+    [TestMethod]
+    public void ScenarioWithoutATestTypeTagIsRejectedWithTheAcceptedTags()
+    {
+        var exception = Assert.ThrowsExactly<ArgumentException>(() => BaseHook.VerifyScenarioTags(["local"]));
+
+        StringAssert.Contains(exception.Message, "at least one test type tag");
+        StringAssert.Contains(exception.Message, "ui");
+        StringAssert.Contains(exception.Message, "api");
+    }
+
+    [TestMethod]
     public void DeclaresParallelizeIsFalseForAnAssemblyWithoutTheAttribute()
         => Assert.IsFalse(BaseHook.DeclaresParallelize(typeof(BaseHookTests).Assembly));
 

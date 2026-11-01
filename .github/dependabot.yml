@@ -1,0 +1,18 @@
+version: 2
+
+# The package sits on a chain of transitive dependencies it does not control; the
+# System.Drawing.Common advisory (GHSA-rxg9-xrhp-64gj) was found and pinned by hand. Dependabot
+# keeps the pins current, and `dotnet.yml` fails the build when a known vulnerability remains.
+
+updates:
+  - package-ecosystem: nuget
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5

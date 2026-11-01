@@ -24,7 +24,7 @@ documentation, not notes.
 | Project | Type | Notes |
 |---|---|---|
 | `HardPoint.Testing/` | Packable class library (`net10.0`) | The package itself — 10 source files |
-| `HardPoint.Testing.Tests/` | MSTest | 49 unit tests: configuration reading (including `browserType` validation and the trace mode), artifact-path resolution, the browser-context options the driver builds and the parallelism warning |
+| `HardPoint.Testing.Tests/` | MSTest | 55 unit tests: configuration reading (including `browserType` validation and the trace mode), artifact-path resolution, the browser-context options the driver builds and the parallelism warning |
 | `HardPoint.Testing.SmokeTests/` | MSTest + Reqnroll | One real browser scenario against the **packed** package — **outside `TestAutomation.slnx`**, because it needs the `artifacts-smoke/` feed |
 
 Solution `TestAutomation.slnx`; .NET 10 pinned by `global.json`. Dependencies:
@@ -165,9 +165,11 @@ published version pinned in **its** `Directory.Packages.props` — bump that pin
 
 | Layer | Command | Proves |
 |---|---|---|
-| Unit tests | `dotnet test HardPoint.Testing.Tests/HardPoint.Testing.Tests.csproj` | `ConfigReader` and `ArtifactDirectory`, including failure messages and override limits |
+| Unit tests | `dotnet test HardPoint.Testing.Tests/HardPoint.Testing.Tests.csproj --collect:"XPlat Code Coverage"` | Configuration, artifact paths, the driver's context options, the hook guards and the report caching; CI also enforces a **55% line-coverage floor** |
 | Formatting gate | `dotnet format TestAutomation.slnx --verify-no-changes` | Style is CI-enforced |
+| Vulnerabilities | `dotnet list package --vulnerable --include-transitive` | No known advisory in the dependency chain |
 | Package smoke | `dotnet pack ... -p:Version=0.0.0-smoke -o artifacts-smoke` then `dotnet test HardPoint.Testing.SmokeTests/... -c Release` | **The `.nupkg` itself**: dependency completeness, driver launch, hook execution, report written |
+| Browser matrix | weekly `browser-matrix.yml` (chromium, firefox, webkit) | The three advertised engines, through the same packed-package scenario |
 | Real consumer | the suite's 20 scenarios against the Docker SUT | End-to-end package behaviour |
 
 `0.0.0-smoke` is local-only so the restore can only resolve the package just packed. `CI=true`
@@ -196,7 +198,7 @@ three dependencies.
   and the PDB, so a consumer stepping into the package navigates to the tagged source.
 - **XML documentation** (`GenerateDocumentationFile`) ships `HardPoint.Testing.xml`; an undocumented
   public member is a build failure (CS1591 promoted to an error), not a warning nobody reads.
-- Versions stay prerelease until a consumer proves the API. Current: `0.1.0-preview.8`.
+- Versions stay prerelease until a consumer proves the API. Current: `0.1.0-preview.9`.
 - When a config key, tag or binding changes, update `HardPoint.Testing/README.md` in the same change
   — it ships inside the package.
 
@@ -225,9 +227,14 @@ can be unlisted but never deleted, so a broken package must not reach nuget.org.
 
 | Workflow | Trigger | Purpose |
 |---|---|---|
-| `dotnet.yml` | every push and PR | Restore, build, unit test, `dotnet format --verify-no-changes`, pack, upload |
-| `smoke.yml` | every push and PR, and as a gate in `publish.yml` | Pack `0.0.0-smoke`, assert the `.nupkg` exists, restore the smoke project from it, install Chromium via the package's own `playwright.ps1`, run the scenario, assert exactly one test ran and the report contains its title |
+| `dotnet.yml` | every push and PR | Restore, build, unit test with coverage (55% floor), `dotnet format --verify-no-changes`, vulnerability scan, pack, upload |
+| `smoke.yml` | every push and PR, and as a gate in `publish.yml` | Pack `0.0.0-smoke`, assert the `.nupkg` exists, restore the smoke project from it, install the requested browser via the package's own `playwright.ps1`, run the scenario, assert exactly one test ran and the report contains its title |
+| `browser-matrix.yml` | weekly (Mondays, 03:00 UTC) or `workflow_dispatch` | Calls `smoke.yml` for chromium, firefox and webkit, so two thirds of the documented surface cannot rot unnoticed |
 | `publish.yml` | tag `v*` or `workflow_dispatch` | The release path in §10 |
+
+`smoke.yml` takes a `browser` input (default `chromium`) and passes it to the scenario as
+`TEST_BrowserType`; that is the documented override, so no config file is rewritten. Dependabot
+(`.github/dependabot.yml`) keeps the NuGet and GitHub Actions pins current.
 
 ## 12. Conventions
 

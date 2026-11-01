@@ -1,4 +1,4 @@
-﻿name: HardPoint.Testing
+name: HardPoint.Testing
 
 on:
   push:
@@ -37,7 +37,9 @@ jobs:
     - name: Unit tests
       run: |
         set -o pipefail
-        dotnet test HardPoint.Testing.Tests/HardPoint.Testing.Tests.csproj --no-build -c "$CONFIGURATION" --logger "console;verbosity=normal" | tee framework-test-run.log
+        dotnet test HardPoint.Testing.Tests/HardPoint.Testing.Tests.csproj --no-build -c "$CONFIGURATION" \
+          --collect:"XPlat Code Coverage" --results-directory TestResults \
+          --logger "console;verbosity=normal" | tee framework-test-run.log
 
         total=$(grep -E '^\s*Total tests:' framework-test-run.log | awk '{print $3}')
         passed=$(grep -E '^\s*Passed:' framework-test-run.log | awk '{print $2}')
@@ -47,6 +49,45 @@ jobs:
 
         echo "Framework unit tests: $total tests, $passed passed" >> "$GITHUB_STEP_SUMMARY"
         printf '| Result | Count |\n| --- | --- |\n| Total | %s |\n| Passed | %s |\n' "$total" "$passed" >> "$GITHUB_STEP_SUMMARY"
+    - name: Coverage floor
+      # The suite covered ConfigReader and ArtifactDirectory only while the driver, hooks and
+      # reporter went untested; a floor keeps the number from sliding back while the gaps close.
+      run: |
+        python3 - <<'PY'
+        import glob, os, sys, xml.etree.ElementTree as ET
+
+        files = glob.glob("TestResults/**/coverage.cobertura.xml", recursive=True)
+        if not files:
+            sys.exit("no coverage report was produced")
+
+        root = ET.parse(files[0]).getroot()
+        package = next(
+            (p for p in root.findall(".//packages/package") if p.get("name") == "HardPoint.Testing"),
+            None,
+        )
+        rate = float((package if package is not None else root).get("line-rate"))
+        floor = 0.55
+
+        line = f"HardPoint.Testing line coverage: {rate:.2%} (floor {floor:.0%})"
+        print(line)
+        with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as summary:
+            summary.write(f"| Coverage | {rate:.2%} |\n")
+
+        if rate < floor:
+            sys.exit(f"coverage {rate:.2%} is below the {floor:.0%} floor")
+        PY
+    - name: Check for vulnerable packages
+      run: |
+        set -o pipefail
+        dotnet list package --vulnerable --include-transitive | tee vulnerable-packages.log
+
+        if grep -q "has the following vulnerable packages" vulnerable-packages.log; then
+          echo '### Vulnerable packages' >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          grep -A 20 "has the following vulnerable packages" vulnerable-packages.log >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          exit 1
+        fi
     - name: Format check
       run: |
         set -o pipefail

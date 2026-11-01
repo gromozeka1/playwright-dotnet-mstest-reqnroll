@@ -10,6 +10,12 @@ name: Package smoke test
 
 on:
   workflow_call:
+    inputs:
+      browser:
+        description: Browser engine the packed package is exercised against.
+        required: false
+        type: string
+        default: chromium
 
 permissions:
   contents: read
@@ -52,12 +58,16 @@ jobs:
       run: >
         dotnet build HardPoint.Testing.SmokeTests/HardPoint.Testing.SmokeTests.csproj
         --no-restore -c "$CONFIGURATION"
-    - name: Install Chromium
+    - name: Install ${{ inputs.browser }}
       # Installed through the script the build copied to the smoke project's output, which only
       # exists because the package brings Microsoft.Playwright to a consumer.
-      run: pwsh "HardPoint.Testing.SmokeTests/bin/$CONFIGURATION/net10.0/playwright.ps1" install --with-deps chromium
+      run: pwsh "HardPoint.Testing.SmokeTests/bin/$CONFIGURATION/net10.0/playwright.ps1" install --with-deps ${{ inputs.browser }}
     - name: Run the scenario
       shell: bash
+      env:
+        # The CI config file declares browserType, so the documented TEST_ override selects the
+        # engine without rewriting the file.
+        TEST_BrowserType: ${{ inputs.browser }}
       run: |
         set -o pipefail
         dotnet test HardPoint.Testing.SmokeTests/HardPoint.Testing.SmokeTests.csproj \
